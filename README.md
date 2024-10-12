@@ -3,9 +3,7 @@
 [![License: Artistic-2.0](https://img.shields.io/badge/License-Artistic_2.0-0298c3.svg)](https://opensource.org/licenses/Artistic-2.0)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13459761.svg)](https://doi.org/10.5281/zenodo.13459761)
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/omicscodeathon/Exvar/main/logo.png" alt="exvar logo" width="300"  />
-</p>
+<img src="inst/logo.png" align="right" alt="" width="120" />
 
 
 ## Table of Contents
@@ -73,7 +71,7 @@ The package could be installed as follows:
 
     library(devtools)
 
-    devtools::install_github("omicscodeathon/Exvar/Package")
+    devtools::install_github("omicscodeathon/Exvar")
 
     library(Exvar)
 
