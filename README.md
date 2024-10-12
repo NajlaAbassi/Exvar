@@ -26,7 +26,7 @@ We developed a novel R package using multiple R packages to perform gene express
 
 ## About Exvar
 
-The Exvar R package performs gene expression and  genetic variats (SNPs, Indels, and CNVs) data analysis and  visualization.
+The Exvar R package performs gene expression and  genetic variants (SNPs, Indels, and CNVs) data analysis and  visualization.
 
 It is developed to facilitate and minimize the skills required for the genetic expression and variants calling. It includes 9 functions, providing an easy biologist-friendly workflow.
 
@@ -34,7 +34,7 @@ It is developed to facilitate and minimize the skills required for the genetic e
 
 It could be used to analyze data from eight species including:
 
-    * Homo Sapiens (19, 37, and 38)
+    * Homo Sapiens (hg19, 37, and 38)
 
     * Mus Musculus
 
@@ -52,7 +52,7 @@ It could be used to analyze data from eight species including:
 
 ### Limitations:
 
-| Function/Species           | processfastq | counts | expression | callsnp | callcnv | callindel | vizexp | vizsnp | vizcnv |
+| Function/Species           | processfastq | count | geneExpression | callsnp | callcnv | callindels | vizexp | vizsnp | vizcnv |
 |-----------------------------|--------------|--------|------------|---------|---------|-----------|--------|--------|--------|
 | **Homo Sapiens**           | ✓            | ✓      | ✓          | ✓       | ✓       | ✓         | ✓      | ✓      | ✓      |
 | **Mus Musculus**           | ✓            | ✓      | ✓          | ✓       | ✗       | ✓         | ✓      | ✓      | ✓      |
@@ -78,24 +78,24 @@ The package could be installed as follows:
 
 ## Functions
 
-The package consists of 6 data analysis functions (processfastq(); counts(); expression(); callsnp(); callcnv(); and callindel()), 3 data visualization functions (vizexp(), vizsnp(), and vizcnv()), and a requirement() function is also provided to install all the dependencies. The list of functions and their roles are represented in Table 1.
+The package consists of 6 data analysis functions (processfastq(); count(); geneExpression(); callsnp(); callcnv(); and callindels()), 3 data visualization functions (vizexp(), vizsnp(), and vizcnv()), and a requirement() function is also provided to install all the dependencies. The list of functions and their roles are represented in Table 1.
 
 | Function        | Role                                   | Input                    | Output                     |
 |-----------------|----------------------------------------|--------------------------|-----------------------------|
 | `requirement()` | Install required packages              | -                        | -                           |
 | `processfastq()`| Preprocess fastq files                 | Fastq files              | BAM files                   |
-| `counts()`      | Gene count analysis                    | BAM files                | CSV file                    |
-| `expression()`  | Identify DEGs                          | BAM files                | CSV file                    |
+| `count()`      | Gene count analysis                    | BAM files                | CSV file                    |
+| `geneExpression()`  | Identify DEGs                          | BAM files                | CSV file                    |
 | `callsnp()`     | SNP calling                            | BAM files                | VCF files                   |
 | `callcnv()`     | CNV calling                            | BAM files                | CSV file                    |
-| `callindel()`   | Indel calling                          | BAM files                | VCF files                   |
+| `callindels()`   | Indel calling                          | BAM files                | VCF files                   |
 | `vizexp()`      | Analyze and visualize gene expression  | CSV file                 | Interactive interface       |
 | `vizsnp()`      | Analyze and visualize SNP data          | VCF files                | Interactive interface       |
 | `vizcnv()`      | Analyze and visualize CNV data          | CSV file                 | Interactive interface       |
 
 
 #### Operating system :
-- Linux for the processfastq(), counts(), expression(), callsnp(), callcnv(), and callindel() functions
+- Linux for the processfastq(), count(), geneExpression(), callsnp(), callcnv(), and callindels() functions
 
 - The visualization functions vizexp(), vizsnp(), and vizcnv() are platform-independent.
 
