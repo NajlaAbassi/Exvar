@@ -1,0 +1,3 @@
+test fastq files were created by subsetting the first 20000 line of the originql file.
+e.g:
+Get-Content file_1.fastq -TotalCount 20000 | Out-File subset_file_1.fastq
