@@ -1,0 +1,136 @@
+---
+title: "The Exvar User's Guide "
+author:
+  - name: Imraan Dixon
+  - email: imraandixon@gmail.com
+  - name: Hiba Ben Aribi
+  - email: benaribi.hiba@gmail.com
+  - name: Najla Abassi
+date: "`r BiocStyle::doc_date()`"
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_float: true
+vignette: >
+  %\VignetteIndexEntry{Exvar_userguide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  %\VignettePackage{Evar}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  error    = FALSE,
+  warning  = FALSE,
+  eval     = TRUE,
+  message  = FALSE
+)
+```
+
+# Introduction
+
+This vignette describes how to use the `Exvar` package to perform gene expression analysis and genetic variant calling from RNA sequencing data.
+We will be illustrating the main features of `Exvar` on a publicly available dataset from (Wang et al., 2016) "Clonal evolution of glioblastoma under therapy", published in Nature Genetics in 2016.
+[doi:10.1038/ng.3590](https://doi.org/10.1038/ng.3590)
+
+# Getting started
+
+To install `Exvar` package, we start R and enter the following command
+
+```{r}
+install.packages("devtools")
+
+library(devtools)
+
+devtools::install_github("omicscodeathon/Exvar/Package")
+```
+
+Once installed, the package can be loaded and attached to the current workspace
+as follows:
+
+```{r setup}
+library("Exvar")
+```
+
+# Load required packages
+
+Before starting any analysis, we will start by loading all necessary packages, in case any package dependencies are missing 
+
+```{r requirement}
+requirement()
+```
+
+For demonstration purposes in this vignette, we will use 2 samples fetched from a public data set (Study Accession: SRP074425; Run: SRR3477442, SRR3477445). These samples were previously subseted for easy use of this vignette, e.i we are not using the full fastq files.
+Results from the original fastq files where used for pipeline validation, and can be found in the original paper and supplementary materials.
+
+# Fastq preprocessing
+
+```{r preprocess}
+path_list <- list_files_with_exts(dir = "./inst/data", exts = "fastq")
+
+processfastq(file = path_list,
+             dir = "./inst/data",
+             paired = TRUE,
+             threads = 6L,
+             molecule = "RNA")
+```
+
+# Quantification
+
+```{r count}
+count()
+```
+
+# Differential Expression
+
+```{r de}
+geneExpression
+```
+
+# Variant calling
+
+## SNP calling
+
+```{r callsnp}
+callsnp()
+```
+
+## CNV calling
+
+```{r callcnv}
+callcnv()
+```
+
+## Indel calling
+
+```{r callindel}
+callindels()
+```
+
+# Interactive visualization
+
+## DE
+
+```{r}
+vizexp()
+```
+
+## SNP
+
+```{r vizexp}
+vizsnp()
+```
+
+## CNV
+
+```{r vizsnp}
+vizcnv()
+```
+
+# Session info {.unnumbered}
+
+```{r}
+sessionInfo()
+```
