@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
   comment = "#>",
   error    = FALSE,
   warning  = FALSE,
-  eval     = TRUE,
+  eval     = FALSE, # for now false to build the package
   message  = FALSE
 )
 ```
