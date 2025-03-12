@@ -16,7 +16,38 @@ License: use_mit_license()
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Depends: 
+Depends:
+Imports:
+    AnnotationDbi,
+    BSgenome.Athaliana.TAIR.TAIR9,
+    BSgenome.Celegans.UCSC.ce11,
+    BSgenome.Dmelanogaster.UCSC.dm6,
+    BSgenome.Drerio.UCSC.danRer11,
+    BSgenome.Hsapiens.UCSC.hg19,
+    BSgenome.Hsapiens.UCSC.hg38,
+    BSgenome.Mmusculus.UCSC.mm10,
+    BSgenome.Rnorvegicus.UCSC.rn5,
+    BSgenome.Scerevisiae.UCSC.sacCer3,
+    DESeq2,
+    SummarizedExperiment,
+    TxDb.Athaliana.BioMart.plantsmart28,
+    TxDb.Celegans.UCSC.ce11.refGene,
+    TxDb.Delegans.UCSC.ce11.refGene,
+    TxDb.Dmelanogaster.UCSC.dm6.ensGene,
+    TxDb.Dnorvegicus.UCSC.rn5.refGene,
+    TxDb.Drerio.UCSC.danRer11.refGene,
+    TxDb.Hsapiens.UCSC.hg19.knownGene,
+    TxDb.Hsapiens.UCSC.hg38.knownGene,
+    TxDb.Mmusculus.UCSC.mm10.knownGene,
+    TxDb.Scerevisiae.UCSC.sacCer3.sgdGene,
+    org.At.tair.db,
+    org.Ce.eg.db,
+    org.Dm.eg.db,
+    org.Dr.eg.db,
+    org.Hs.eg.db,
+    org.Mm.eg.db,
+    org.Rn.eg.db,
+    org.Sc.sgd.db
 Suggests: 
     BSgenome.Hsapiens.UCSC.hg19,
     org.Hs.eg.db,

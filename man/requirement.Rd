@@ -4,7 +4,7 @@
 \alias{requirement}
 \title{requirement}
 \usage{
-requirement()
+requirement(all = FALSE)
 }
 \value{
 Install required packages
