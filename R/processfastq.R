@@ -13,7 +13,7 @@
 #' @param molecule A character string indicating either DNA or RNA samples.
 #' @return A list of file paths to created BAM files
 #' @export
-<<<<<<< HEAD:R/processfastq.R
+
 processfastq <- function(file = list_files_with_exts(dir = dir,
                                                      exts = "fastq"),
                             dir = getwd(),
@@ -23,18 +23,7 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
     if(Sys.info()[['sysname']] != "Linux"){
     stop("This function is only available on Linux.")
     }
-=======
-processfastq <- function(file = tools::list_files_with_exts(dir = dir, 
-                                                     exts = "fastq"),
-                         dir = getwd(), 
-                         paired = FALSE, 
-                         threads = 4L,
-                         molecule = "RNA") {
-  if(Sys.info()[['sysname']] != "Linux"){
-    message("This function is only available on Linux.")
-    stop()
-  }
->>>>>>> upstream/main:Package/R/processfastq.R
+
   cat(paste0("These are the species currently supported by Exvar: \n",
              "[1] Homo sapiens (hg19) \n",
              "[2] Homo sapiens (hg38) \n",
@@ -46,14 +35,7 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
              "[8] Saccharomyces cerevisiae \n",
              "[9] Caenorhabditis elegans \n"))
   species <- readline("Type the number of the species that you would like to use as a reference: ")
-<<<<<<< HEAD:R/processfastq.R
 
-  library(Rfastp)
-  library(gmapR)
-
-=======
-  
->>>>>>> upstream/main:Package/R/processfastq.R
   wd <- getwd()
   ##Sets the reference genome that corresponds to the species chosen by the user
   switch(species,
@@ -61,11 +43,7 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
            ##Homo sapiens hg19
            library(BSgenome.Hsapiens.UCSC.hg19)
            organism <- BSgenome.Hsapiens.UCSC.hg19
-<<<<<<< HEAD:R/processfastq.R
 
-=======
-           
->>>>>>> upstream/main:Package/R/processfastq.R
            ##Selects hg19 as the reference genome
            ##If reference doesn't exist within package directory, create one
            if (dir.exists(paste0(find.package("Exvar"), "/hg19"))) {
@@ -99,11 +77,7 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
            ##Mus musculus mm10
            library(BSgenome.Mmusculus.UCSC.mm10)
            organism <- BSgenome.Mmusculus.UCSC.mm10
-<<<<<<< HEAD:R/processfastq.R
 
-=======
-           
->>>>>>> upstream/main:Package/R/processfastq.R
            ##Selects mm10 as the reference genome
            ##If reference doesn't exist within package directory, create one
            if (dir.exists(paste0(find.package("Exvar"), "/mm10"))) {
@@ -120,11 +94,7 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
            ##Arabidopsis thaliana TAIR9
            library(BSgenome.Athaliana.TAIR.TAIR9)
            organism <- BSgenome.Athaliana.TAIR.TAIR9
-<<<<<<< HEAD:R/processfastq.R
 
-=======
-           
->>>>>>> upstream/main:Package/R/processfastq.R
            ##Selects hg19 as the reference genome
            ##If reference doesn't exist within package directory, create one
            if (dir.exists(paste0(find.package("Exvar"), "/TAIR9"))) {
@@ -141,11 +111,7 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
            ##Drosophilia melanogaster dm6
            library(BSgenome.Dmelanogaster.UCSC.dm6)
            organism <- BSgenome.Dmelanogaster.UCSC.dm6
-<<<<<<< HEAD:R/processfastq.R
 
-=======
-           
->>>>>>> upstream/main:Package/R/processfastq.R
            ##Selects dm6 as the reference genome
            ##If reference doesn't exist within package directory, create one
            if (dir.exists(paste0(find.package("Exvar"), "/dm6"))) {
@@ -162,11 +128,7 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
            ##Danio rerio danRer11
            library(BSgenome.Drerio.UCSC.danRer11)
            organism <- BSgenome.Drerio.UCSC.danRer11
-<<<<<<< HEAD:R/processfastq.R
 
-=======
-           
->>>>>>> upstream/main:Package/R/processfastq.R
            ##Selects danRer11 as the reference genome
            ##If reference doesn't exist within package directory, create one
            if (dir.exists(paste0(find.package("Exvar"), "/danRer11"))) {
@@ -183,11 +145,7 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
            ##Rattus norvegicus rn5
            library(BSgenome.Rnorvegicus.UCSC.rn5)
            organism <- BSgenome.Rnorvegicus.UCSC.rn5
-<<<<<<< HEAD:R/processfastq.R
 
-=======
-           
->>>>>>> upstream/main:Package/R/processfastq.R
            ##Selects danRer11 as the reference genome
            ##If reference doesn't exist within package directory, create one
            if (dir.exists(paste0(find.package("Exvar"), "/rn5"))) {
@@ -204,11 +162,7 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
            ##Saccharomyces cerevisiae sacCer3
            library(BSgenome.Scerevisiae.UCSC.sacCer3)
            organism <- BSgenome.Scerevisiae.UCSC.sacCer3
-<<<<<<< HEAD:R/processfastq.R
 
-=======
-           
->>>>>>> upstream/main:Package/R/processfastq.R
            ##Selects sacCer3 as the reference genome
            ##If reference doesn't exist within package directory, create one
            if (dir.exists(paste0(find.package("Exvar"), "/sacCer3"))) {
@@ -225,11 +179,7 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
            ##Caenorhabditis elagans
            library(BSgenome.Celegans.UCSC.ce11)
            organism <- BSgenome.Celegans.UCSC.ce11
-<<<<<<< HEAD:R/processfastq.R
 
-=======
-           
->>>>>>> upstream/main:Package/R/processfastq.R
            ##Selects ce11 as the reference genome
            ##If reference doesn't exist within package directory, create one
            if (dir.exists(paste0(find.package("Exvar"), "/ce11"))) {
@@ -242,13 +192,9 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
                                   create = TRUE)
            }
          }
-<<<<<<< HEAD:R/processfastq.R
+
 )
 
-=======
-  )
-  
->>>>>>> upstream/main:Package/R/processfastq.R
   print("Obtaining GSNAP parameters...")
   snapParam <- gmapR::GsnapParam(refgen, unique_only = TRUE,
                           molecule = molecule, nthreads = threads)
@@ -271,25 +217,15 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
     for (x in inputfl) {
       print("Quality checking fastq...")
       fastqPath <- file.path(c(inputFastq[c(2*x-1)], inputFastq[c(2*x)]))
-<<<<<<< HEAD:R/processfastq.R
-      read1 <- file_path_as_absolute(fastqPath[1])
-      read2 <- file_path_as_absolute(fastqPath[2])
+
+      read1 <- tools::file_path_as_absolute(fastqPath[1])
+      read2 <- tools::file_path_as_absolute(fastqPath[2])
       setwd(paste0(dir,
                    "/",
                    foldernames[c(2*x)]))
-      json_report <- rfastp(read1 = read1, read2 = read2,
+      json_report <- Rfastp::rfastp(read1 = read1, read2 = read2,
                             outputFastq =
                               paste0(foldernames[2*x],
-=======
-      read1 <- tools::file_path_as_absolute(fastqPath[1])
-      read2 <- tools::file_path_as_absolute(fastqPath[2])
-      setwd(paste0(dir, 
-                   "/", 
-                   foldernames[c(2*x)]))
-      json_report <- Rfastp::rfastp(read1 = read1, read2 = read2,  
-                            outputFastq = 
-                              paste0(foldernames[2*x], 
->>>>>>> upstream/main:Package/R/processfastq.R
                                      '_quality_checked'),
                             thread = threads, maxReadLength = 200L)
       QC <- Rfastp::qcSummary(json_report)
@@ -329,23 +265,14 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
     for (x in inputfl) {
       print("Quality checking fastq...")
       fastqPath <- file.path(inputFastq[c(x)])
-<<<<<<< HEAD:R/processfastq.R
-      read1 <- file_path_as_absolute(fastqPath)
+
+      read1 <- tools::file_path_as_absolute(fastqPath)
       setwd(paste0(dir,
                    "/",
                    foldernames[c(x)]))
-      json_report <- rfastp(read1 = read1,
+      json_report <- Rfastp::rfastp(read1 = read1,
                             outputFastq =
                               paste0(foldernames[x],
-=======
-      read1 <- tools::file_path_as_absolute(fastqPath)
-      setwd(paste0(dir, 
-                   "/", 
-                   foldernames[c(x)]))
-      json_report <- Rfastp::rfastp(read1 = read1, 
-                            outputFastq = 
-                              paste0(foldernames[x], 
->>>>>>> upstream/main:Package/R/processfastq.R
                                      '_quality_checked'),
                             thread = threads, maxReadLength = 200L)
       QC <- qcSummary(json_report)
@@ -356,11 +283,7 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
       ## Iterates over all previously selected files
       ## Output is an indexed bam file
       print("Unzipping fastq.gz")
-<<<<<<< HEAD:R/processfastq.R
-      gunzip(paste0(foldernames[x],
-=======
-      R.utils::gunzip(paste0(foldernames[x], 
->>>>>>> upstream/main:Package/R/processfastq.R
+      R.utils::gunzip(paste0(foldernames[x],
                     '_quality_checked_R1.fastq.gz'))
       read <- paste0(foldernames[x],
                      '_quality_checked_R1.fastq')
@@ -377,7 +300,3 @@ processfastq <- function(file = tools::list_files_with_exts(dir = dir,
   setwd(wd)
   return(bams)
 }
-<<<<<<< HEAD:R/processfastq.R
-
-=======
->>>>>>> upstream/main:Package/R/processfastq.R

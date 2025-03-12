@@ -5,13 +5,11 @@
 [![License: Artistic-2.0](https://img.shields.io/badge/License-Artistic_2.0-0298c3.svg)](https://opensource.org/licenses/Artistic-2.0)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13459761.svg)](https://doi.org/10.5281/zenodo.13459761)
 
-<<<<<<< HEAD
 =======
 <p align="center">
   <img src="https://raw.githubusercontent.com/omicscodeathon/exvar/main/logo.png" alt="exvar logo" width="300"  />
 </p>
 
->>>>>>> upstream/main
 
 ## Table of Contents
 1. [Motivation](#Motivation)
@@ -33,11 +31,7 @@ We developed a novel R package using multiple R packages to perform gene express
 
 ## About exvar
 
-<<<<<<< HEAD
 The Exvar R package performs gene expression and  genetic variants (SNPs, Indels, and CNVs) data analysis and  visualization.
-=======
-The exvar R package performs gene expression and  genetic variats (SNPs, Indels, and CNVs) data analysis and  visualization.
->>>>>>> upstream/main
 
 It is developed to facilitate and minimize the skills required for the genetic expression and variants calling. It includes 9 functions, providing an easy biologist-friendly workflow.
 
@@ -63,7 +57,7 @@ It could be used to analyze data from eight species including:
 
 ### Limitations:
 
-| Function/Species           | processfastq | count | geneExpression | callsnp | callcnv | callindels | vizexp | vizsnp | vizcnv |
+| Functions/Species           | processfastq | count | geneExpression | callsnp | callcnv | callindels | vizexp | vizsnp | vizcnv |
 |-----------------------------|--------------|--------|------------|---------|---------|-----------|--------|--------|--------|
 | **Homo Sapiens**           | ✓            | ✓      | ✓          | ✓       | ✓       | ✓         | ✓      | ✓      | ✓      |
 | **Mus Musculus**           | ✓            | ✓      | ✓          | ✓       | ✗       | ✓         | ✓      | ✓      | ✓      |
@@ -82,11 +76,7 @@ The package could be installed as follows:
 
     library(devtools)
 
-<<<<<<< HEAD
-    devtools::install_github("omicscodeathon/Exvar")
-=======
     devtools::install_github("omicscodeathon/exvar/Package")
->>>>>>> upstream/main
 
     library(exvar)
 

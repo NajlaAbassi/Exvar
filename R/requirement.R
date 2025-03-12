@@ -4,13 +4,8 @@
 #'
 #' @examples Exvar::requirement()
 
-<<<<<<< HEAD:R/requirement.R
-requirement <- function(){
-
-=======
 requirement <- function(all = FALSE){
-  
->>>>>>> upstream/main:Package/R/requirement.R
+
   #species selection
   if (all == FALSE){
     cat(paste0("These are the species currently supported by Exvar, choose the number corresponding to the target specie: \n",
@@ -26,7 +21,7 @@ requirement <- function(all = FALSE){
     } else {
     species <- 1:8
     }
-  
+
   # Detect operating system
   switch(Sys.info()[['sysname']],
          "Linux"={
