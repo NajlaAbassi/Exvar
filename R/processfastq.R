@@ -11,6 +11,19 @@
 #' @param paired A logical indicating whether the data is single or pair-end.
 #' @param threads The number of cores to use in the process.
 #' @param molecule A character string indicating either DNA or RNA samples.
+#' @import BSgenome.Hsapiens.UCSC.hg19
+#' @import BSgenome.Hsapiens.UCSC.hg38
+#' @import BSgenome.Mmusculus.UCSC.mm10
+#' @import BSgenome.Athaliana.TAIR.TAIR9
+#' @import BSgenome.Dmelanogaster.UCSC.dm6
+#' @import BSgenome.Drerio.UCSC.danRer11
+#' @import BSgenome.Rnorvegicus.UCSC.rn5
+#' @import BSgenome.Scerevisiae.UCSC.sacCer3
+#' @import BSgenome.Celegans.UCSC.ce11
+#' @import tools
+#'
+#'
+#'
 #' @return A list of file paths to created BAM files
 #' @export
 
@@ -41,7 +54,7 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
   switch(species,
          "1"={
            ##Homo sapiens hg19
-           library(BSgenome.Hsapiens.UCSC.hg19)
+           #library(BSgenome.Hsapiens.UCSC.hg19)
            organism <- BSgenome.Hsapiens.UCSC.hg19
 
            ##Selects hg19 as the reference genome
@@ -58,7 +71,7 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          },
          "2"={
            ##Homo sapiens hg38
-           library(BSgenome.Hsapiens.UCSC.hg38)
+           #library(BSgenome.Hsapiens.UCSC.hg38)
            organism <- BSgenome.Hsapiens.UCSC.hg38
 
            ##Selects hg38 as the reference genome
@@ -75,7 +88,7 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          },
          "3"={
            ##Mus musculus mm10
-           library(BSgenome.Mmusculus.UCSC.mm10)
+           #library(BSgenome.Mmusculus.UCSC.mm10)
            organism <- BSgenome.Mmusculus.UCSC.mm10
 
            ##Selects mm10 as the reference genome
@@ -92,7 +105,7 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          },
          "4"={
            ##Arabidopsis thaliana TAIR9
-           library(BSgenome.Athaliana.TAIR.TAIR9)
+           #library(BSgenome.Athaliana.TAIR.TAIR9)
            organism <- BSgenome.Athaliana.TAIR.TAIR9
 
            ##Selects hg19 as the reference genome
@@ -109,7 +122,7 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          },
          "5"={
            ##Drosophilia melanogaster dm6
-           library(BSgenome.Dmelanogaster.UCSC.dm6)
+           #library(BSgenome.Dmelanogaster.UCSC.dm6)
            organism <- BSgenome.Dmelanogaster.UCSC.dm6
 
            ##Selects dm6 as the reference genome
@@ -126,7 +139,7 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          },
          "6"={
            ##Danio rerio danRer11
-           library(BSgenome.Drerio.UCSC.danRer11)
+           #library(BSgenome.Drerio.UCSC.danRer11)
            organism <- BSgenome.Drerio.UCSC.danRer11
 
            ##Selects danRer11 as the reference genome
@@ -143,7 +156,7 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          },
          "7"={
            ##Rattus norvegicus rn5
-           library(BSgenome.Rnorvegicus.UCSC.rn5)
+           #library(BSgenome.Rnorvegicus.UCSC.rn5)
            organism <- BSgenome.Rnorvegicus.UCSC.rn5
 
            ##Selects danRer11 as the reference genome
@@ -160,7 +173,7 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          },
          "8"={
            ##Saccharomyces cerevisiae sacCer3
-           library(BSgenome.Scerevisiae.UCSC.sacCer3)
+           #library(BSgenome.Scerevisiae.UCSC.sacCer3)
            organism <- BSgenome.Scerevisiae.UCSC.sacCer3
 
            ##Selects sacCer3 as the reference genome
@@ -177,7 +190,7 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          },
          "9"={
            ##Caenorhabditis elagans
-           library(BSgenome.Celegans.UCSC.ce11)
+           #library(BSgenome.Celegans.UCSC.ce11)
            organism <- BSgenome.Celegans.UCSC.ce11
 
            ##Selects ce11 as the reference genome
@@ -275,7 +288,7 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
                               paste0(foldernames[x],
                                      '_quality_checked'),
                             thread = threads, maxReadLength = 200L)
-      QC <- qcSummary(json_report)
+      QC <- Rfastp::qcSummary(json_report)
       write.csv(QC, "QC_summary.csv")
       gc()
 

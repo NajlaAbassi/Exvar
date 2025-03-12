@@ -1,18 +1,20 @@
 
 #' Call copy number variants
-#' 
+#'
 #' This function calls copy number variants from sample BAM files compared to
 #' control BAM files. It assumes that BAM files are stored in separate folders
 #' as is created by fastqProcession(). This function requires that control BAM
 #' files are provided. Once complete, it creates a CSV file containing copy
 #' number information.
-#' 
+#'
 #' @param controldir The parent directory of the sample directories.
 #' @param control The names of the folders in which control BAM files are. If NULL, all folders in controldir will be checked for BAM files.
 #' @param experimentdir The parent directory of sample on which to investigate copy numbers.
 #' @param experiment The names of the folders in which sample BAM files are. If NULL, all folders in experimentdir will be checked for BAM files.
 #' @param bed A character string indicating BED file path or a TxDb object from which to extract a BED file.
 #' @param outputdir The directory in which to place copy number call.
+#' @import TxDb.Hsapiens.UCSC.hg19.knownGene
+#' @import TxDb.Hsapiens.UCSC.hg38.knownGene
 #' @return A data frame containing copy number calls.
 #' @export
 callcnv <- function(controldir,
@@ -26,15 +28,15 @@ callcnv <- function(controldir,
              "[1] Homo sapiens (hg19) \n",
              "[2] Homo sapiens (hg38) \n"))
   species <- readline("Type the number of the species that you would like to use as a reference: ")
-  
+
   wd <- getwd()
   ##Sets the reference genome that corresponds to the species chosen by the user
   switch(species,
          "1"={
            ##Homo sapiens hg19
-           library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+           #library(TxDb.Hsapiens.UCSC.hg19.knownGene)
            bed <- TxDb.Hsapiens.UCSC.hg19.knownGene
-           
+
            bedname <- paste0(metadata(bed)[metadata(bed)$name == "Genome", 2], ".bed")
            if (file.exists(bedname)){
              countWindows <- panelcn.mops::getWindows(bedname)
@@ -50,9 +52,9 @@ callcnv <- function(controldir,
          },
          "2"={
            ##Homo sapiens hg38
-           library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+           #library(TxDb.Hsapiens.UCSC.hg38.knownGene)
            bed <- TxDb.Hsapiens.UCSC.hg38.knownGene
-           
+
            bedname <- paste0(metadata(bed)[metadata(bed)$name == "Genome", 2], ".bed")
            if (file.exists(bedname)){
              countWindows <- panelcn.mops::getWindows(bedname)
@@ -67,13 +69,13 @@ callcnv <- function(controldir,
            }
          }
   )
-  
+
   ##Labels the folder that contains the sample folders under the path parameter
   control_samples <- list.dirs(path = controldir,
                                full.names = TRUE, recursive = FALSE)
-  experiment_samples <- list.dirs(path = experimentdir, 
+  experiment_samples <- list.dirs(path = experimentdir,
                                   full.names = TRUE, recursive = FALSE)
-  
+
   ##Gets the BAM files from sample directories
   control_bamfl <- c()
   experiment_bamfl <- c()
@@ -81,12 +83,12 @@ callcnv <- function(controldir,
     bam <- tools::list_files_with_exts(dir = i, exts = "bam")
     control_bamfl <- append(control_bamfl, bam)
   }
-  
+
   for (i in experiment_samples) {
     bam <- tools::list_files_with_exts(dir = i, exts = "bam")
     experiment_bamfl <- append(experiment_bamfl, bam)
   }
-  
+
   ##Counts copy number variation of regions found in the bed file
   ##The results are stored in a dataframe list with each index corresponding to
   ##each sample
@@ -112,7 +114,7 @@ callcnv <- function(controldir,
   resulttable <- panelcn.mops::createResultTable(resultlist = resultlist, XandCB = experiment,
                                    countWindows = countWindows,
                                    sampleNames = sampleNames)
-  
+
   ##Creates a CSV file containing the copy number counts of all the samples
   ##CNVRanger has NE_id instead of sample_ID which is more generic
   print("Formatting results...")
@@ -129,7 +131,7 @@ callcnv <- function(controldir,
     CNV_calls <- merge(CNV_calls, calls, all.x = TRUE, all.y = TRUE)
     CNV_calls <- merge(CNV_calls, calls, all.x = TRUE, all.y = TRUE)
   }
-  
+
   setwd(outputdir)
   print("Writing copy number variation to file...")
   write.csv(CNV_calls, "Copy Number Calls.csv", row.names = FALSE)
