@@ -12,10 +12,10 @@ output:
     toc: true
     toc_float: true
 vignette: >
-  %\VignetteIndexEntry{Exvar_userguide}
+  %\VignetteIndexEntry{exvar_userguide}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-  %\VignettePackage{Evar}
+  %\VignettePackage{evar}
 ---
 
 ```{r, include = FALSE}
@@ -31,13 +31,13 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This vignette describes how to use the `Exvar` package to perform gene expression analysis and genetic variant calling from RNA sequencing data.
-We will be illustrating the main features of `Exvar` on a publicly available dataset from (Wang et al., 2016) "Clonal evolution of glioblastoma under therapy", published in Nature Genetics in 2016.
+This vignette describes how to use the `exvar` package to perform gene expression analysis and genetic variant calling from RNA sequencing data.
+We will be illustrating the main features of `exvar` on a publicly available dataset from (Wang et al., 2016) "Clonal evolution of glioblastoma under therapy", published in Nature Genetics in 2016.
 [doi:10.1038/ng.3590](https://doi.org/10.1038/ng.3590)
 
 # Getting started
 
-To install `Exvar` package, we start R and enter the following command
+To install `exvar` package, we start R and enter the following command
 
 ```{r}
 install.packages("devtools")
@@ -51,7 +51,7 @@ Once installed, the package can be loaded and attached to the current workspace
 as follows:
 
 ```{r setup}
-library("Exvar")
+library("exvar")
 ```
 
 # Load required packages
