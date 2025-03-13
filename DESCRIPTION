@@ -12,7 +12,7 @@ Description: Enables easy and streamlined visualization of analytical
     as well as generating gene count information and performing differential
     expression analysis. Additionally, it has built-in GUI functionality for
     visualizing these data.
-License: use_mit_license() 
+License: Artistic-2.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
