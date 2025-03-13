@@ -1,4 +1,4 @@
-# Exvar 1.1.1
+# exvar 1.1.1
 
 * Adding vignette for better reproducibility + test data
 
