@@ -29,9 +29,9 @@ A data frame list containing all of the differential expression comparison.
 \description{
 This function analyses differentially expressed genes between sample groups.
 It assumes that sample BAM files are ordered in a directory structure such as
-"group/sample/" as fastqProcession() would order it. There should be more
+"group/sample/" as processfastq() would order it. There should be more
 than one sample per group or else differential expression analysis won't work
 It outputs a CSV file showing differential expression (ordered by p-value).
-It works similarly to gene_Counting(), but then further analyses those counts
+It works similarly to count(), but then further analyses those counts
 to obtain differential expression data.
 }

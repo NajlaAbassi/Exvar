@@ -12,12 +12,6 @@ callcnv(controldir, experimentdir, outputdir = getwd())
 \item{experimentdir}{The parent directory of sample on which to investigate copy numbers.}
 
 \item{outputdir}{The directory in which to place copy number call.}
-
-\item{control}{The names of the folders in which control BAM files are. If NULL, all folders in controldir will be checked for BAM files.}
-
-\item{experiment}{The names of the folders in which sample BAM files are. If NULL, all folders in experimentdir will be checked for BAM files.}
-
-\item{bed}{A character string indicating BED file path or a TxDb object from which to extract a BED file.}
 }
 \value{
 A data frame containing copy number calls.
@@ -25,7 +19,7 @@ A data frame containing copy number calls.
 \description{
 This function calls copy number variants from sample BAM files compared to
 control BAM files. It assumes that BAM files are stored in separate folders
-as is created by fastqProcession(). This function requires that control BAM
+as is created by processfastq(). This function requires that control BAM
 files are provided. Once complete, it creates a CSV file containing copy
 number information.
 }

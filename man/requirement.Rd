@@ -6,12 +6,16 @@
 \usage{
 requirement(all = FALSE)
 }
+\arguments{
+\item{all}{Logical. If \code{FALSE} (default), prompts the user to select a species from a predefined list.
+If \code{TRUE}, installs dependencies for all available species (1 to 8) without prompting.}
+}
 \value{
-Install required packages
+The function does not return a value but installs necessary packages.
 }
 \description{
-requirement
+Install required packages based on operating system and selected species
 }
 \examples{
-Exvar::requirement()
+exvar::requirement()
 }
