@@ -1,6 +1,9 @@
 # Exvar 1.1.1
 
-* add vignette for better reproducibility + add test data
+* Adding vignette for better reproducibility + test data
+
+* Managing package dependencies to ensure users install only the necessary
+  species-specific resources
 
 # Exvar 1.1.0
 
