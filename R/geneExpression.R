@@ -1,12 +1,11 @@
-
 #' Analyse differential gene expression
 #'
 #' This function analyses differentially expressed genes between sample groups.
 #' It assumes that sample BAM files are ordered in a directory structure such as
-#' "group/sample/" as fastqProcession() would order it. There should be more
+#' "group/sample/" as processfastq() would order it. There should be more
 #' than one sample per group or else differential expression analysis won't work
 #' It outputs a CSV file showing differential expression (ordered by p-value).
-#' It works similarly to gene_Counting(), but then further analyses those counts
+#' It works similarly to count(), but then further analyses those counts
 #' to obtain differential expression data.
 #'
 #'
@@ -15,38 +14,6 @@
 #' @param outputdir Output directory of CSV file.
 #' @param threads Number of cores to use.
 #' @param paired Indicates whether the samples are from paired-end reads.
-#' @import BSgenome.Hsapiens.UCSC.hg19
-#' @import TxDb.Hsapiens.UCSC.hg19.knownGene
-#' @import org.Hs.eg.db
-#' @importFrom AnnotationDbi select
-#' @import DESeq2
-#' @import SummarizedExperiment
-#' @import BSgenome.Celegans.UCSC.ce11
-#' @import TxDb.Delegans.UCSC.ce11.refGene
-#' @import org.Ce.eg.db
-#' @import BSgenome.Mmusculus.UCSC.mm10
-#' @import TxDb.Mmusculus.UCSC.mm10.knownGene
-#' @import org.Mm.eg.db
-#' @import BSgenome.Athaliana.TAIR.TAIR9
-#' @import TxDb.Athaliana.BioMart.plantsmart28
-#' @import org.At.tair.db
-#' @import BSgenome.Hsapiens.UCSC.hg38
-#' @import TxDb.Hsapiens.UCSC.hg38.knownGene
-#' @import org.Hs.eg.db
-#' @import BSgenome.Drerio.UCSC.danRer11
-#' @import TxDb.Drerio.UCSC.danRer11.refGene
-#' @import org.Dr.eg.db
-#' @import BSgenome.Dmelanogaster.UCSC.dm6
-#' @import TxDb.Dmelanogaster.UCSC.dm6.ensGene
-#' @import org.Dm.eg.db
-#' @import BSgenome.Scerevisiae.UCSC.sacCer3
-#' @import TxDb.Scerevisiae.UCSC.sacCer3.sgdGene
-#' @import org.Sc.sgd.db
-#' @import BSgenome.Rnorvegicus.UCSC.rn5
-#' @import TxDb.Dnorvegicus.UCSC.rn5.refGene
-#' @import org.Rn.eg.db
-#'
-#'
 #'
 #' @return A data frame list containing all of the differential expression comparison.
 #' @export
@@ -55,6 +22,12 @@ geneExpression <- function(dir = getwd(),
                            outputdir = getwd(),
                            threads = 4L,
                            paired = FALSE) {
+
+  ## check for the OS, to avoid crashing for non linux users!!
+  if (Sys.info()[["sysname"]] != "Linux") {
+    stop("geneExpression() only works on Linux! Please run it in a Linux environment.")
+  }
+
   cat(paste0("These are the species currently supported by ExpVar: \n",
              "[1] Homo sapiens (hg19) \n",
              "[2] Homo sapiens (hg38) \n",
@@ -73,7 +46,21 @@ geneExpression <- function(dir = getwd(),
            # library(BSgenome.Hsapiens.UCSC.hg19)
            # library(TxDb.Hsapiens.UCSC.hg19.knownGene)
            # library(org.Hs.eg.db)
-           organism <- BSgenome.Hsapiens.UCSC.hg19
+           # check if the package is installed otherwise show an error
+           if (!requireNamespace("BSgenome.Hsapiens.UCSC.hg19", quietly = TRUE)) {
+             stop("The package 'BSgenome.Hsapiens.UCSC.hg19' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Hsapiens.UCSC.hg19')")
+           }
+           if (!requireNamespace("TxDb.Hsapiens.UCSC.hg19.knownGene", quietly = TRUE)) {
+             stop("The package 'TxDb.Hsapiens.UCSC.hg19.knownGene' is required but not installed.
+       Install it with: BiocManager::install('TxDb.Hsapiens.UCSC.hg19.knownGene')")
+           }
+           if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) {
+             stop("The package 'org.Hs.eg.db' is required but not installed.
+       Install it with: BiocManager::install('org.Hs.eg.db')")
+           }
+
+           organism <- BSgenome.Hsapiens.UCSC.hg19::BSgenome.Hsapiens.UCSC.hg19
 
            wd <- getwd()
            bpp = BiocParallel::MulticoreParam(threads)
@@ -188,7 +175,20 @@ geneExpression <- function(dir = getwd(),
            # library(BSgenome.Hsapiens.UCSC.hg38)
            # library(TxDb.Hsapiens.UCSC.hg38.knownGene)
            # library(org.Hs.eg.db)
-           organism <- BSgenome.Hsapiens.UCSC.hg38
+           if (!requireNamespace("BSgenome.Hsapiens.UCSC.hg38", quietly = TRUE)) {
+             stop("The package 'BSgenome.Hsapiens.UCSC.hg38' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Hsapiens.UCSC.hg38')")
+           }
+           if (!requireNamespace("TxDb.Hsapiens.UCSC.hg38.knownGene", quietly = TRUE)) {
+             stop("The package 'TxDb.Hsapiens.UCSC.hg38.knownGene' is required but not installed.
+       Install it with: BiocManager::install('TxDb.Hsapiens.UCSC.hg38.knownGene')")
+           }
+           if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) {
+             stop("The package 'org.Hs.eg.db' is required but not installed.
+       Install it with: BiocManager::install('org.Hs.eg.db')")
+           }
+
+           organism <- BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38
 
            wd <- getwd()
            bpp = BiocParallel::MulticoreParam(threads)
@@ -303,7 +303,20 @@ geneExpression <- function(dir = getwd(),
            # library(BSgenome.Mmusculus.UCSC.mm10)
            # library(TxDb.Mmusculus.UCSC.mm10.knownGene)
            # library(org.Mm.eg.db)
-           organism <- BSgenome.Mmusculus.UCSC.mm10
+           if (!requireNamespace("BSgenome.Mmusculus.UCSC.mm10", quietly = TRUE)) {
+             stop("The package 'BSgenome.Mmusculus.UCSC.mm10' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Mmusculus.UCSC.mm10')")
+           }
+           if (!requireNamespace("TxDb.Mmusculus.UCSC.mm10.knownGene", quietly = TRUE)) {
+             stop("The package 'TxDb.Mmusculus.UCSC.mm10.knownGene' is required but not installed.
+       Install it with: BiocManager::install('TxDb.Mmusculus.UCSC.mm10.knownGene')")
+           }
+           if (!requireNamespace("org.Mm.eg.db", quietly = TRUE)) {
+             stop("The package 'org.Mm.eg.db' is required but not installed.
+       Install it with: BiocManager::install('org.Mm.eg.db')")
+           }
+
+           organism <- BSgenome.Mmusculus.UCSC.mm10::BSgenome.Mmusculus.UCSC.mm10
 
            wd <- getwd()
            bpp = BiocParallel::MulticoreParam(threads)
@@ -418,7 +431,20 @@ geneExpression <- function(dir = getwd(),
            # library(BSgenome.Athaliana.TAIR.TAIR9)
            # library(TxDb.Athaliana.BioMart.plantsmart28)
            # library(org.At.tair.db)
-           organism <- BSgenome.Athaliana.TAIR.TAIR9
+           if (!requireNamespace("BSgenome.Athaliana.TAIR.TAIR9", quietly = TRUE)) {
+             stop("The package 'BSgenome.Athaliana.TAIR.TAIR9' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Athaliana.TAIR.TAIR9')")
+           }
+           if (!requireNamespace("TxDb.Athaliana.BioMart.plantsmart28", quietly = TRUE)) {
+             stop("The package 'TxDb.Athaliana.BioMart.plantsmart28' is required but not installed.
+       Install it with: BiocManager::install('TxDb.Athaliana.BioMart.plantsmart28')")
+           }
+           if (!requireNamespace("org.At.tair.db", quietly = TRUE)) {
+             stop("The package 'org.At.tair.db' is required but not installed.
+       Install it with: BiocManager::install('org.At.tair.db')")
+           }
+
+           organism <- BSgenome.Athaliana.TAIR.TAIR9::BSgenome.Athaliana.TAIR.TAIR9
 
            wd <- getwd()
            bpp = BiocParallel::MulticoreParam(threads)
@@ -532,7 +558,20 @@ geneExpression <- function(dir = getwd(),
            # library(BSgenome.Dmelanogaster.UCSC.dm6)
            # library(TxDb.Dmelanogaster.UCSC.dm6.ensGene)
            # library(org.Dm.eg.db)
-           organism <- BSgenome.Dmelanogaster.UCSC.dm6
+           if (!requireNamespace("BSgenome.Dmelanogaster.UCSC.dm6", quietly = TRUE)) {
+             stop("The package 'BSgenome.Dmelanogaster.UCSC.dm6' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Dmelanogaster.UCSC.dm6')")
+           }
+           if (!requireNamespace("TxDb.Dmelanogaster.UCSC.dm6.ensGene", quietly = TRUE)) {
+             stop("The package 'TxDb.Dmelanogaster.UCSC.dm6.ensGene' is required but not installed.
+       Install it with: BiocManager::install('TxDb.Dmelanogaster.UCSC.dm6.ensGene')")
+           }
+           if (!requireNamespace("org.Dm.eg.db", quietly = TRUE)) {
+             stop("The package 'org.Dm.eg.db' is required but not installed.
+       Install it with: BiocManager::install('org.Dm.eg.db')")
+           }
+
+           organism <- BSgenome.Dmelanogaster.UCSC.dm6::BSgenome.Dmelanogaster.UCSC.dm6
 
            wd <- getwd()
            bpp = BiocParallel::MulticoreParam(threads)
@@ -646,7 +685,20 @@ geneExpression <- function(dir = getwd(),
            # library(BSgenome.Drerio.UCSC.danRer11)
            # library(TxDb.Drerio.UCSC.danRer11.refGene)
            # library(org.Dr.eg.db)
-           organism <- BSgenome.Drerio.UCSC.danRer11
+           if (!requireNamespace("BSgenome.Drerio.UCSC.danRer11", quietly = TRUE)) {
+             stop("The package 'BSgenome.Drerio.UCSC.danRer11' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Drerio.UCSC.danRer11')")
+           }
+           if (!requireNamespace("TxDb.Drerio.UCSC.danRer11.refGene", quietly = TRUE)) {
+             stop("The package 'TxDb.Drerio.UCSC.danRer11.refGene' is required but not installed.
+       Install it with: BiocManager::install('TxDb.Drerio.UCSC.danRer11.refGene')")
+           }
+           if (!requireNamespace("org.Dr.eg.db", quietly = TRUE)) {
+             stop("The package 'org.Dr.eg.db' is required but not installed.
+       Install it with: BiocManager::install('org.Dr.eg.db')")
+           }
+
+           organism <- BSgenome.Drerio.UCSC.danRer11::BSgenome.Drerio.UCSC.danRer11
 
            wd <- getwd()
            bpp = BiocParallel::MulticoreParam(threads)
@@ -758,13 +810,26 @@ geneExpression <- function(dir = getwd(),
          "7"={
            ##Rattus norvegicus rn5
            # library(BSgenome.Rnorvegicus.UCSC.rn5)
-           # library(TxDb.Dnorvegicus.UCSC.rn5.refGene)
+           # library(TxDb.Dnorvegicus.UCSC.rn5.refGene) # typo?
            # library(org.Rn.eg.db)
-           organism <- BSgenome.Rnorvegicus.UCSC.rn5
+           if (!requireNamespace("BSgenome.Rnorvegicus.UCSC.rn5", quietly = TRUE)) {
+             stop("The package 'BSgenome.Rnorvegicus.UCSC.rn5' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Rnorvegicus.UCSC.rn5')")
+           }
+           if (!requireNamespace("TxDb.Rnorvegicus.UCSC.rn5.refGene", quietly = TRUE)) {
+             stop("The package 'TxDb.Rnorvegicus.UCSC.rn5.refGene' is required but not installed.
+       Install it with: BiocManager::install('TxDb.Rnorvegicus.UCSC.rn5.refGene')")
+           }
+           if (!requireNamespace("org.Rn.eg.db", quietly = TRUE)) {
+             stop("The package 'org.Rn.eg.db' is required but not installed.
+       Install it with: BiocManager::install('org.Rn.eg.db')")
+           }
+
+           organism <- BSgenome.Rnorvegicus.UCSC.rn5::BSgenome.Rnorvegicus.UCSC.rn5
 
            wd <- getwd()
            bpp = BiocParallel::MulticoreParam(threads)
-           geneExons <- GenomicFeatures::exonsBy(TxDb.Dnorvegicus.UCSC.rn5.refGene, by = "gene")
+           geneExons <- GenomicFeatures::exonsBy(TxDb.Rnorvegicus.UCSC.rn5.refGene, by = "gene")
            if (is.null(groups)) {
              folders <- list.dirs(path = dir, full.names = TRUE, recursive = FALSE)
            } else {
@@ -874,7 +939,21 @@ geneExpression <- function(dir = getwd(),
            # library(BSgenome.Scerevisiae.UCSC.sacCer3)
            # library(TxDb.Scerevisiae.UCSC.sacCer3.sgdGene)
            # library(org.Sc.sgd.db)
-           organism <- BSgenome.Scerevisiae.UCSC.sacCer3
+
+           if (!requireNamespace("BSgenome.Scerevisiae.UCSC.sacCer3", quietly = TRUE)) {
+             stop("The package 'BSgenome.Scerevisiae.UCSC.sacCer3' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Scerevisiae.UCSC.sacCer3')")
+           }
+           if (!requireNamespace("TxDb.Scerevisiae.UCSC.sacCer3.sgdGene", quietly = TRUE)) {
+             stop("The package 'TxDb.Scerevisiae.UCSC.sacCer3.sgdGene' is required but not installed.
+       Install it with: BiocManager::install('TxDb.Scerevisiae.UCSC.sacCer3.sgdGene')")
+           }
+           if (!requireNamespace("org.Sc.sgd.db", quietly = TRUE)) {
+             stop("The package 'org.Sc.sgd.db' is required but not installed.
+       Install it with: BiocManager::install('org.Sc.sgd.db')")
+           }
+
+           organism <- BSgenome.Scerevisiae.UCSC.sacCer3::BSgenome.Scerevisiae.UCSC.sacCer3
 
            wd <- getwd()
            bpp = BiocParallel::MulticoreParam(threads)
@@ -986,13 +1065,26 @@ geneExpression <- function(dir = getwd(),
          "9"={
            ##Caenorhabditis elagans
            # library(BSgenome.Celegans.UCSC.ce11)
-           # library(TxDb.Delegans.UCSC.ce11.refGene)
+           # library(TxDb.Delegans.UCSC.ce11.refGene) # typo?
            # library(org.Ce.eg.db)
-           organism <- BSgenome.Celegans.UCSC.ce11
+           if (!requireNamespace("BSgenome.Celegans.UCSC.ce11", quietly = TRUE)) {
+             stop("The package 'BSgenome.Celegans.UCSC.ce11' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Celegans.UCSC.ce11')")
+           }
+           if (!requireNamespace("TxDb.Celegans.UCSC.ce11.refGene", quietly = TRUE)) {
+             stop("The package 'TxDb.Celegans.UCSC.ce11.refGene' is required but not installed.
+       Install it with: BiocManager::install('TxDb.Celegans.UCSC.ce11.refGene')")
+           }
+           if (!requireNamespace("org.Ce.eg.db", quietly = TRUE)) {
+             stop("The package 'org.Ce.eg.db' is required but not installed.
+       Install it with: BiocManager::install('org.Ce.eg.db')")
+           }
+
+           organism <- BSgenome.Celegans.UCSC.ce11::BSgenome.Celegans.UCSC.ce11
 
            wd <- getwd()
            bpp = BiocParallel::MulticoreParam(threads)
-           geneExons <- GenomicFeatures::exonsBy(TxDb.Delegans.UCSC.ce11.refGene, by = "gene")
+           geneExons <- GenomicFeatures::exonsBy(TxDb.Celegans.UCSC.ce11.refGene, by = "gene")
            if (is.null(groups)) {
              folders <- list.dirs(path = dir, full.names = TRUE, recursive = FALSE)
            } else {

@@ -1,30 +1,23 @@
-
 #' Call copy number variants
 #'
 #' This function calls copy number variants from sample BAM files compared to
 #' control BAM files. It assumes that BAM files are stored in separate folders
-#' as is created by fastqProcession(). This function requires that control BAM
+#' as is created by processfastq(). This function requires that control BAM
 #' files are provided. Once complete, it creates a CSV file containing copy
 #' number information.
 #'
 #' @param controldir The parent directory of the sample directories.
-#' @param control The names of the folders in which control BAM files are. If NULL, all folders in controldir will be checked for BAM files.
 #' @param experimentdir The parent directory of sample on which to investigate copy numbers.
-#' @param experiment The names of the folders in which sample BAM files are. If NULL, all folders in experimentdir will be checked for BAM files.
-#' @param bed A character string indicating BED file path or a TxDb object from which to extract a BED file.
 #' @param outputdir The directory in which to place copy number call.
-#' @import TxDb.Hsapiens.UCSC.hg19.knownGene
-#' @import TxDb.Hsapiens.UCSC.hg38.knownGene
 #' @return A data frame containing copy number calls.
 #' @export
 callcnv <- function(controldir,
                     experimentdir,
                     outputdir = getwd()) {
-  if(Sys.info()[['sysname']] != "Linux"){
-    message("This function is only available on Linux.")
-    stop()
+  if (Sys.info()[["sysname"]] != "Linux") {
+    stop("callcnv() only works on Linux! Please run it in a Linux environment.")
   }
-  cat(paste0("These are the species currently supported by Exvar: \n",
+  cat(paste0("These are the species currently supported by exvar: \n",
              "[1] Homo sapiens (hg19) \n",
              "[2] Homo sapiens (hg38) \n"))
   species <- readline("Type the number of the species that you would like to use as a reference: ")
@@ -35,7 +28,11 @@ callcnv <- function(controldir,
          "1"={
            ##Homo sapiens hg19
            #library(TxDb.Hsapiens.UCSC.hg19.knownGene)
-           bed <- TxDb.Hsapiens.UCSC.hg19.knownGene
+           if (!requireNamespace("TxDb.Hsapiens.UCSC.hg19.knownGene", quietly = TRUE)) {
+             stop("The package 'TxDb.Hsapiens.UCSC.hg19.knownGene' is required but not installed.
+       Install it with: BiocManager::install('TxDb.Hsapiens.UCSC.hg19.knownGene')")
+           }
+           bed <- TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.Hsapiens.UCSC.hg19.knownGene
 
            bedname <- paste0(metadata(bed)[metadata(bed)$name == "Genome", 2], ".bed")
            if (file.exists(bedname)){
@@ -53,7 +50,11 @@ callcnv <- function(controldir,
          "2"={
            ##Homo sapiens hg38
            #library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-           bed <- TxDb.Hsapiens.UCSC.hg38.knownGene
+           if (!requireNamespace("TxDb.Hsapiens.UCSC.hg38.knownGene", quietly = TRUE)) {
+             stop("The package 'TxDb.Hsapiens.UCSC.hg38.knownGene' is required but not installed.
+       Install it with: BiocManager::install('TxDb.Hsapiens.UCSC.hg38.knownGene')")
+           }
+           bed <- TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene
 
            bedname <- paste0(metadata(bed)[metadata(bed)$name == "Genome", 2], ".bed")
            if (file.exists(bedname)){

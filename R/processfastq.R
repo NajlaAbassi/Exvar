@@ -11,18 +11,6 @@
 #' @param paired A logical indicating whether the data is single or pair-end.
 #' @param threads The number of cores to use in the process.
 #' @param molecule A character string indicating either DNA or RNA samples.
-#' @import BSgenome.Hsapiens.UCSC.hg19
-#' @import BSgenome.Hsapiens.UCSC.hg38
-#' @import BSgenome.Mmusculus.UCSC.mm10
-#' @import BSgenome.Athaliana.TAIR.TAIR9
-#' @import BSgenome.Dmelanogaster.UCSC.dm6
-#' @import BSgenome.Drerio.UCSC.danRer11
-#' @import BSgenome.Rnorvegicus.UCSC.rn5
-#' @import BSgenome.Scerevisiae.UCSC.sacCer3
-#' @import BSgenome.Celegans.UCSC.ce11
-#' @import tools
-#'
-#'
 #'
 #' @return A list of file paths to created BAM files
 #' @export
@@ -33,9 +21,9 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
                             paired = FALSE,
                             threads = 4L,
                             molecule = "RNA") {
-    if(Sys.info()[['sysname']] != "Linux"){
-    stop("This function is only available on Linux.")
-    }
+  if (Sys.info()[["sysname"]] != "Linux") {
+    stop("processfastq() only works on Linux! Please run it in a Linux environment.")
+  }
 
   cat(paste0("These are the species currently supported by Exvar: \n",
              "[1] Homo sapiens (hg19) \n",
@@ -55,7 +43,11 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          "1"={
            ##Homo sapiens hg19
            #library(BSgenome.Hsapiens.UCSC.hg19)
-           organism <- BSgenome.Hsapiens.UCSC.hg19
+           if (!requireNamespace("BSgenome.Hsapiens.UCSC.hg19", quietly = TRUE)) {
+             stop("The package 'BSgenome.Hsapiens.UCSC.hg19' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Hsapiens.UCSC.hg19')")
+           }
+           organism <- BSgenome.Hsapiens.UCSC.hg19::BSgenome.Hsapiens.UCSC.hg19
 
            ##Selects hg19 as the reference genome
            ##If reference doesn't exist within package directory, create one
@@ -72,7 +64,11 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          "2"={
            ##Homo sapiens hg38
            #library(BSgenome.Hsapiens.UCSC.hg38)
-           organism <- BSgenome.Hsapiens.UCSC.hg38
+           if (!requireNamespace("BSgenome.Hsapiens.UCSC.hg38", quietly = TRUE)) {
+             stop("The package 'BSgenome.Hsapiens.UCSC.hg38' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Hsapiens.UCSC.hg38')")
+           }
+           organism <- BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38
 
            ##Selects hg38 as the reference genome
            ##If reference doesn't exist within package directory, create one
@@ -89,7 +85,11 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          "3"={
            ##Mus musculus mm10
            #library(BSgenome.Mmusculus.UCSC.mm10)
-           organism <- BSgenome.Mmusculus.UCSC.mm10
+           if (!requireNamespace("BSgenome.Mmusculus.UCSC.mm10", quietly = TRUE)) {
+             stop("The package 'BSgenome.Mmusculus.UCSC.mm10' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Mmusculus.UCSC.mm10')")
+           }
+           organism <- BSgenome.Mmusculus.UCSC.mm10::BSgenome.Mmusculus.UCSC.mm10
 
            ##Selects mm10 as the reference genome
            ##If reference doesn't exist within package directory, create one
@@ -106,7 +106,11 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          "4"={
            ##Arabidopsis thaliana TAIR9
            #library(BSgenome.Athaliana.TAIR.TAIR9)
-           organism <- BSgenome.Athaliana.TAIR.TAIR9
+           if (!requireNamespace("BSgenome.Athaliana.TAIR.TAIR9", quietly = TRUE)) {
+             stop("The package 'BSgenome.Athaliana.TAIR.TAIR9' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Athaliana.TAIR.TAIR9')")
+           }
+           organism <- BSgenome.Athaliana.TAIR.TAIR9::BSgenome.Athaliana.TAIR.TAIR9
 
            ##Selects hg19 as the reference genome
            ##If reference doesn't exist within package directory, create one
@@ -123,7 +127,12 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          "5"={
            ##Drosophilia melanogaster dm6
            #library(BSgenome.Dmelanogaster.UCSC.dm6)
-           organism <- BSgenome.Dmelanogaster.UCSC.dm6
+           if (!requireNamespace("BSgenome.Dmelanogaster.UCSC.dm6", quietly = TRUE)) {
+             stop("The package 'BSgenome.Dmelanogaster.UCSC.dm6' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Dmelanogaster.UCSC.dm6')")
+           }
+           organism <- BSgenome.Dmelanogaster.UCSC.dm6::BSgenome.Dmelanogaster.UCSC.dm6
+
 
            ##Selects dm6 as the reference genome
            ##If reference doesn't exist within package directory, create one
@@ -140,7 +149,12 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          "6"={
            ##Danio rerio danRer11
            #library(BSgenome.Drerio.UCSC.danRer11)
-           organism <- BSgenome.Drerio.UCSC.danRer11
+           if (!requireNamespace("BSgenome.Drerio.UCSC.danRer11", quietly = TRUE)) {
+             stop("The package 'BSgenome.Drerio.UCSC.danRer11' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Drerio.UCSC.danRer11')")
+           }
+           organism <- BSgenome.Drerio.UCSC.danRer11::BSgenome.Drerio.UCSC.danRer11
+
 
            ##Selects danRer11 as the reference genome
            ##If reference doesn't exist within package directory, create one
@@ -157,7 +171,11 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          "7"={
            ##Rattus norvegicus rn5
            #library(BSgenome.Rnorvegicus.UCSC.rn5)
-           organism <- BSgenome.Rnorvegicus.UCSC.rn5
+           if (!requireNamespace("BSgenome.Rnorvegicus.UCSC.rn5", quietly = TRUE)) {
+             stop("The package 'BSgenome.Rnorvegicus.UCSC.rn5' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Rnorvegicus.UCSC.rn5')")
+           }
+           organism <- BSgenome.Rnorvegicus.UCSC.rn5::BSgenome.Rnorvegicus.UCSC.rn5
 
            ##Selects danRer11 as the reference genome
            ##If reference doesn't exist within package directory, create one
@@ -174,7 +192,11 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          "8"={
            ##Saccharomyces cerevisiae sacCer3
            #library(BSgenome.Scerevisiae.UCSC.sacCer3)
-           organism <- BSgenome.Scerevisiae.UCSC.sacCer3
+           if (!requireNamespace("BSgenome.Scerevisiae.UCSC.sacCer3", quietly = TRUE)) {
+             stop("The package 'BSgenome.Scerevisiae.UCSC.sacCer3' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Scerevisiae.UCSC.sacCer3')")
+           }
+           organism <- BSgenome.Scerevisiae.UCSC.sacCer3::BSgenome.Scerevisiae.UCSC.sacCer3
 
            ##Selects sacCer3 as the reference genome
            ##If reference doesn't exist within package directory, create one
@@ -191,7 +213,11 @@ processfastq <- function(file = list_files_with_exts(dir = dir,
          "9"={
            ##Caenorhabditis elagans
            #library(BSgenome.Celegans.UCSC.ce11)
-           organism <- BSgenome.Celegans.UCSC.ce11
+           if (!requireNamespace("BSgenome.Celegans.UCSC.ce11", quietly = TRUE)) {
+             stop("The package 'BSgenome.Celegans.UCSC.ce11' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Celegans.UCSC.ce11')")
+           }
+           organism <- BSgenome.Celegans.UCSC.ce11::BSgenome.Celegans.UCSC.ce11
 
            ##Selects ce11 as the reference genome
            ##If reference doesn't exist within package directory, create one

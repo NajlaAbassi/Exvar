@@ -1,8 +1,8 @@
 #' Call single nucleotide polymorphism variants
-#' 
-#' This function calls SNP variants from BAM files. The results are formatted 
+#'
+#' This function calls SNP variants from BAM files. The results are formatted
 #' into a VCF file and the ID column is populated with dbSNP IDs.
-#' 
+#'
 #' @param bam A list of paths to BAM files
 #' @param threads The number of cores to use.
 #' @param outputdir The output directory for the VCF file.
@@ -11,13 +11,12 @@
 callindels <- function(bam,
                        threads = 4L,
                        outputdir = getwd()) {
-  if(Sys.info()[['sysname']] != "Linux"){
-    message("This function is only available on Linux.")
-    stop()
+  if (Sys.info()[["sysname"]] != "Linux") {
+    stop("callindels() only works on Linux! Please run it in a Linux environment.")
   }
-  cat(paste0("These are the species currently supported by Exvar: \n",
+  cat(paste0("These are the species currently supported by exvar: \n",
              "[1] Homo sapiens (hg19) \n",
-             "[2] Homo sapiens (hg38) \n", 
+             "[2] Homo sapiens (hg38) \n",
              "[3] Mus musculus \n",
              "[4] Arabidopsis thaliana \n",
              "[5] Drosophila melanogaster \n",
@@ -29,25 +28,33 @@ callindels <- function(bam,
   cat("Enable single-chromosome splitting? \nNote: enabling splitting reduces the RAM requirements, but may take longer.")
   mode <- readline("Type [y/n] for [yes/no]: ")
   wd <- getwd()
-  
+
   if (mode == "y") {
     ##Sets the reference genome that corresponds to the species chosen by the user
     switch(species,
            "1"={
-             library(BSgenome.Hsapiens.UCSC.hg19)
-             library(XtraSNPlocs.Hsapiens.dbSNP144.GRCh37)
+             #library(BSgenome.Hsapiens.UCSC.hg19)
+             #library(XtraSNPlocs.Hsapiens.dbSNP144.GRCh37)
              ##Homo sapiens hg19
-             organism <- BSgenome.Hsapiens.UCSC.hg19
-             
+             if (!requireNamespace("BSgenome.Hsapiens.UCSC.hg19", quietly = TRUE)) {
+               stop("The package 'BSgenome.Hsapiens.UCSC.hg19' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Hsapiens.UCSC.hg19')")
+             }
+             if (!requireNamespace("XtraSNPlocs.Hsapiens.dbSNP144.GRCh37", quietly = TRUE)) {
+               stop("The package 'XtraSNPlocs.Hsapiens.dbSNP144.GRCh37' is required but not installed.
+       Install it with: BiocManager::install('XtraSNPlocs.Hsapiens.dbSNP144.GRCh37')")
+             }
+             organism <- BSgenome.Hsapiens.UCSC.hg19::BSgenome.Hsapiens.UCSC.hg19
+
              ##Selects hg19 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/hg19"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/hg19"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -58,7 +65,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               }  
+               }
                setwd(wd)
                bamfl <- Rsamtools::BamFile(i)
                chromosomes <- GenomeInfoDb::seqlevels(bamfl)
@@ -66,13 +73,13 @@ callindels <- function(bam,
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                for (x in chromosomes) {
-                 print(paste0("Creating ", 
+                 print(paste0("Creating ",
                               basename(tools::file_path_sans_ext(i)), "_", x, ".bam ",
                               "in temp folder."))
-                 system(paste0("samtools view -b ", 
+                 system(paste0("samtools view -b ",
                                i,
                                " ", x, " > ",
-                               tempfolder, "/", 
+                               tempfolder, "/",
                                basename(tools::file_path_sans_ext(i)), "_", x, ".bam"))
                  setwd(tempfolder)
                  Rsamtools::sortBam(paste0(basename(tools::file_path_sans_ext(i)), "_", x, ".bam"),
@@ -82,8 +89,8 @@ callindels <- function(bam,
                }
                chrbam <- tools::list_files_with_exts(tempfolder, "bam")
                chrbam <- sort(chrbam)
-               
-               
+
+
                for (bam in chrbam) {
                  print(paste0("Identifying variants in ", basename(bam)))
                  bamfl <- Rsamtools::BamFile(bam)
@@ -114,16 +121,16 @@ callindels <- function(bam,
                  sampleNames(snp) <- tools::file_path_sans_ext(basename(i))
                  mcols(snp) <- NULL
                  print("Formatting variant information as VCF...")
-                 
-                 
-                 
+
+
+
                  vcfpath <- c()
                  if (length(snp) > 0) {
                    vcf <- VariantAnnotation::asVCF(snp)
                    VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(bam), ".vcf"),
                             index = FALSE)
                    vcf <- VariantAnnotation::readVcf(paste0(tools::file_path_sans_ext(bam), ".vcf"))
-                   
+
                    ##Due to constraints in memory, rsIDs are obtained on a chromosome by chromosome
                    ##basis
                    ##The resulting data frame is sorted as per the vcf and the rsIDs are injected
@@ -132,7 +139,7 @@ callindels <- function(bam,
                    all_snps <- XtraSNPlocs.Hsapiens.dbSNP144.GRCh37
                    vcfID <- data.frame()
                    mainChromosomes <- paste0("chr", GenomeInfoDb::seqlevels(all_snps))
-                   
+
                    print("Finding rsIDs...")
                    for (x in mainChromosomes) {
                      vcf_chrom <- vcf[grepl(names(vcf),
@@ -144,10 +151,10 @@ callindels <- function(bam,
                        tar_chr <- GenomeInfoDb::seqlevels(all_snps)[GenomeInfoDb::seqlevels(all_snps) == tar_chr]
                        my_snps <- snpsBySeqname(all_snps, c(tar_chr))
                        snp_ID <- data.frame(posIDX = paste0("chr",
-                                                            GenomicRanges::seqnames(my_snps), 
-                                                            ":", 
-                                                            pos(my_snps)), 
-                                            rsID = my_snps$RefSNP_id, 
+                                                            GenomicRanges::seqnames(my_snps),
+                                                            ":",
+                                                            pos(my_snps)),
+                                            rsID = my_snps$RefSNP_id,
                                             stringsAsFactors = FALSE)
                        matV1 <- data.frame(Variant = names(rd_chr), stringsAsFactors = FALSE)
                        matV1$chromosome <- gsub("(.*):(.*)_(.*)/(.*)", "\\1", matV1$Variant)
@@ -159,12 +166,12 @@ callindels <- function(bam,
                        matV1$start <- as.integer(matV1$start)
                        length <- 1:length(matV1$start)
                        for (i in length) {
-                         matV1$end[i] <- 
+                         matV1$end[i] <-
                            matV1$start[i] + (nchar(matV1$ref_allele[i]) - nchar(matV1$alt_allele[i]))
                        }
                        matV1$end[matV1$end < matV1$start] <- matV1$start[matV1$end < matV1$start] - 1
-                       matV1$posIDX <- gsub("(.*)_(.*)", "\\1", paste0(matV1$chromosome, 
-                                                                       ":", 
+                       matV1$posIDX <- gsub("(.*)_(.*)", "\\1", paste0(matV1$chromosome,
+                                                                       ":",
                                                                        matV1$start,
                                                                        "-",
                                                                        matV1$end))
@@ -175,7 +182,7 @@ callindels <- function(bam,
                        matS <- dplyr::select(matS,-posIDX)
                        vcfID <- merge(vcfID, matS, all.x = TRUE, all.y = TRUE)
                        vcfID <- merge(vcfID, matS, all.x = TRUE, all.y = TRUE)
-                       
+
                        print("Injecting rsIDs into VCF...")
                        vcfID$chr <-  as.integer(gsub("chr", "", vcfID$chromosome))
                        vcfID$chr[vcfID$chromosome == "chrX"] <- 23L
@@ -190,18 +197,18 @@ callindels <- function(bam,
                          rsID <- append(rsID, M)
                          MT <- dd$rsID[dd$chromosome == "chrMT"]
                          rsID <- append(rsID, MT)
-                       }  
+                       }
                        fill <- rep(".", length(names(vcf)) - length(rsID))
                        rsID <- append(rsID, fill)
                        names(vcf) <- rsID
                      }
                    }
-                   
+
                    print("Writing to VCF file...")
                    setwd(tempfolder)
                    print(getwd())
                    print(paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"))
-                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"), 
+                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"),
                                  index = FALSE)
                    gc()
                    setwd(wd)
@@ -209,7 +216,7 @@ callindels <- function(bam,
                    print(paste0("No variants found in ", (basename(bam))))
                  }
                }
-               
+
                print("Merging VCF files...")
                vcflist <- tools::list_files_with_exts(tempfolder, "vcf")
                vcfpath <- normalizePath(vcflist)
@@ -224,33 +231,41 @@ callindels <- function(bam,
                rownames(match) <- gsub("chr?(.*)", ".", rsIDs)
                VariantAnnotation::writeVcf(match, paste0(outputdir, "/",
                                       basename(tools::file_path_sans_ext(i)),
-                                      "_INDEL", ".vcf"), 
+                                      "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
              file.remove(normalizePath(tempfolder))
            },
            "2"={
-             library(BSgenome.Hsapiens.UCSC.hg38)
-             library(XtraSNPlocs.Hsapiens.dbSNP144.GRCh38)
+             #library(BSgenome.Hsapiens.UCSC.hg38)
+             #library(XtraSNPlocs.Hsapiens.dbSNP144.GRCh38)
              ##Homo sapiens hg38
-             organism <- BSgenome.Hsapiens.UCSC.hg38
-             
+             if (!requireNamespace("BSgenome.Hsapiens.UCSC.hg38", quietly = TRUE)) {
+               stop("The package 'BSgenome.Hsapiens.UCSC.hg38' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Hsapiens.UCSC.hg38')")
+             }
+             if (!requireNamespace("XtraSNPlocs.Hsapiens.dbSNP144.GRCh38", quietly = TRUE)) {
+               stop("The package 'XtraSNPlocs.Hsapiens.dbSNP144.GRCh38' is required but not installed.
+       Install it with: BiocManager::install('XtraSNPlocs.Hsapiens.dbSNP144.GRCh38')")
+             }
+             organism <- BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38
+
              ##Selects hg38 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/hg38"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/hg38"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -261,7 +276,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               }  
+               }
                setwd(wd)
                bamfl <- Rsamtools::BamFile(i)
                chromosomes <- GenomeInfoDb::seqlevels(bamfl)
@@ -269,13 +284,13 @@ callindels <- function(bam,
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                for (x in chromosomes) {
-                 print(paste0("Creating ", 
+                 print(paste0("Creating ",
                               basename(tools::file_path_sans_ext(i)), "_", x, ".bam ",
                               "in temp folder."))
-                 system(paste0("samtools view -b ", 
+                 system(paste0("samtools view -b ",
                                i,
                                " ", x, " > ",
-                               tempfolder, "/", 
+                               tempfolder, "/",
                                basename(tools::file_path_sans_ext(i)), "_", x, ".bam"))
                  setwd(tempfolder)
                  Rsamtools::sortBam(paste0(basename(tools::file_path_sans_ext(i)), "_", x, ".bam"),
@@ -285,8 +300,8 @@ callindels <- function(bam,
                }
                chrbam <- tools::list_files_with_exts(tempfolder, "bam")
                chrbam <- sort(chrbam)
-               
-               
+
+
                for (bam in chrbam) {
                  print(paste0("Identifying variants in ", basename(bam)))
                  bamfl <- Rsamtools::BamFile(bam)
@@ -317,16 +332,16 @@ callindels <- function(bam,
                  sampleNames(snp) <- tools::file_path_sans_ext(basename(i))
                  mcols(snp) <- NULL
                  print("Formatting variant information as VCF...")
-                 
-                 
-                 
+
+
+
                  vcfpath <- c()
                  if (length(snp) > 0) {
                    vcf <- VariantAnnotation::asVCF(snp)
                    VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(bam), ".vcf"),
                             index = FALSE)
                    vcf <- VariantAnnotation::readVcf(paste0(tools::file_path_sans_ext(bam), ".vcf"))
-                   
+
                    ##Due to constraints in memory, rsIDs are obtained on a chromosome by chromosome
                    ##basis
                    ##The resulting data frame is sorted as per the vcf and the rsIDs are injected
@@ -335,7 +350,7 @@ callindels <- function(bam,
                    all_snps <- XtraSNPlocs.Hsapiens.dbSNP144.GRCh38
                    vcfID <- data.frame()
                    mainChromosomes <- paste0("chr", GenomeInfoDb::seqlevels(all_snps))
-                   
+
                    print("Finding rsIDs...")
                    for (x in mainChromosomes) {
                      vcf_chrom <- vcf[grepl(names(vcf),
@@ -347,10 +362,10 @@ callindels <- function(bam,
                        tar_chr <- GenomeInfoDb::seqlevels(all_snps)[GenomeInfoDb::seqlevels(all_snps) == tar_chr]
                        my_snps <- snpsBySeqname(all_snps, c(tar_chr))
                        snp_ID <- data.frame(posIDX = paste0("chr",
-                                                            GenomicRanges::seqnames(my_snps), 
-                                                            ":", 
-                                                            pos(my_snps)), 
-                                            rsID = my_snps$RefSNP_id, 
+                                                            GenomicRanges::seqnames(my_snps),
+                                                            ":",
+                                                            pos(my_snps)),
+                                            rsID = my_snps$RefSNP_id,
                                             stringsAsFactors = FALSE)
                        matV1 <- data.frame(Variant = names(rd_chr), stringsAsFactors = FALSE)
                        matV1$chromosome <- gsub("(.*):(.*)_(.*)/(.*)", "\\1", matV1$Variant)
@@ -362,12 +377,12 @@ callindels <- function(bam,
                        matV1$start <- as.integer(matV1$start)
                        length <- 1:length(matV1$start)
                        for (i in length) {
-                         matV1$end[i] <- 
+                         matV1$end[i] <-
                            matV1$start[i] + (nchar(matV1$ref_allele[i]) - nchar(matV1$alt_allele[i]))
                        }
                        matV1$end[matV1$end < matV1$start] <- matV1$start[matV1$end < matV1$start] - 1
-                       matV1$posIDX <- gsub("(.*)_(.*)", "\\1", paste0(matV1$chromosome, 
-                                                                       ":", 
+                       matV1$posIDX <- gsub("(.*)_(.*)", "\\1", paste0(matV1$chromosome,
+                                                                       ":",
                                                                        matV1$start,
                                                                        "-",
                                                                        matV1$end))
@@ -378,7 +393,7 @@ callindels <- function(bam,
                        matS <- dplyr::select(matS,-posIDX)
                        vcfID <- merge(vcfID, matS, all.x = TRUE, all.y = TRUE)
                        vcfID <- merge(vcfID, matS, all.x = TRUE, all.y = TRUE)
-                       
+
                        print("Injecting rsIDs into VCF...")
                        vcfID$chr <-  as.integer(gsub("chr", "", vcfID$chromosome))
                        vcfID$chr[vcfID$chromosome == "chrX"] <- 23L
@@ -393,18 +408,18 @@ callindels <- function(bam,
                          rsID <- append(rsID, M)
                          MT <- dd$rsID[dd$chromosome == "chrMT"]
                          rsID <- append(rsID, MT)
-                       }  
+                       }
                        fill <- rep(".", length(names(vcf)) - length(rsID))
                        rsID <- append(rsID, fill)
                        names(vcf) <- rsID
                      }
                    }
-                   
+
                    print("Writing to VCF file...")
                    setwd(tempfolder)
                    print(getwd())
                    print(paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"))
-                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"), 
+                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"),
                                  index = FALSE)
                    gc()
                    setwd(wd)
@@ -412,7 +427,7 @@ callindels <- function(bam,
                    print(paste0("No variants found in ", (basename(bam))))
                  }
                }
-               
+
                print("Merging VCF files...")
                vcflist <- tools::list_files_with_exts(tempfolder, "vcf")
                vcfpath <- normalizePath(vcflist)
@@ -427,32 +442,36 @@ callindels <- function(bam,
                rownames(match) <- gsub("chr?(.*)", ".", rsIDs)
                VariantAnnotation::writeVcf(match, paste0(outputdir, "/",
                                       basename(tools::file_path_sans_ext(i)),
-                                      "_INDEL", ".vcf"), 
+                                      "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
              file.remove(normalizePath(tempfolder))
            },
            "3"={
-             library(BSgenome.Mmusculus.UCSC.mm10)
+             #library(BSgenome.Mmusculus.UCSC.mm10)
              ##Mus musculus mm10
-             organism <- BSgenome.Mmusculus.UCSC.mm10
-             
+             if (!requireNamespace("BSgenome.Mmusculus.UCSC.mm10", quietly = TRUE)) {
+               stop("The package 'BSgenome.Mmusculus.UCSC.mm10' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Mmusculus.UCSC.mm10')")
+             }
+             organism <- BSgenome.Mmusculus.UCSC.mm10::BSgenome.Mmusculus.UCSC.mm10
+
              ##Selects mm10 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/mm10"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/mm10"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -463,7 +482,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               }  
+               }
                setwd(wd)
                bamfl <- Rsamtools::BamFile(i)
                chromosomes <- GenomeInfoDb::seqlevels(bamfl)
@@ -471,13 +490,13 @@ callindels <- function(bam,
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                for (x in chromosomes) {
-                 print(paste0("Creating ", 
+                 print(paste0("Creating ",
                               basename(tools::file_path_sans_ext(i)), "_", x, ".bam ",
                               "in temp folder."))
-                 system(paste0("samtools view -b ", 
+                 system(paste0("samtools view -b ",
                                i,
                                " ", x, " > ",
-                               tempfolder, "/", 
+                               tempfolder, "/",
                                basename(tools::file_path_sans_ext(i)), "_", x, ".bam"))
                  setwd(tempfolder)
                  Rsamtools::sortBam(paste0(basename(tools::file_path_sans_ext(i)), "_", x, ".bam"),
@@ -487,8 +506,8 @@ callindels <- function(bam,
                }
                chrbam <- tools::list_files_with_exts(tempfolder, "bam")
                chrbam <- sort(chrbam)
-               
-               
+
+
                for (bam in chrbam) {
                  print(paste0("Identifying variants in ", basename(bam)))
                  bamfl <- Rsamtools::BamFile(bam)
@@ -525,16 +544,16 @@ callindels <- function(bam,
                    setwd(tempfolder)
                    print(getwd())
                    print(paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"))
-                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"), 
+                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"),
                                  index = FALSE)
                    gc()
                  } else {
                    print(paste0("No variants found in ", (basename(bam))))
                  }
-                 
+
                  setwd(wd)
-               } 
-               
+               }
+
                print("Merging VCF files...")
                vcflist <- tools::list_files_with_exts(tempfolder, "vcf")
                vcfpath <- normalizePath(vcflist)
@@ -549,32 +568,36 @@ callindels <- function(bam,
                rownames(match) <- gsub("chr?(.*)", ".", rsIDs)
                VariantAnnotation::writeVcf(match, paste0(outputdir, "/",
                                       basename(tools::file_path_sans_ext(i)),
-                                      "_INDEL", ".vcf"), 
+                                      "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
              file.remove(normalizePath(tempfolder))
            },
            "4"={
-             library(BSgenome.Athaliana.TAIR.TAIR9)
+             #library(BSgenome.Athaliana.TAIR.TAIR9)
              ##Arabidopsis thaliana TAIR9
-             organism <- BSgenome.Athaliana.TAIR.TAIR9
-             
+             if (!requireNamespace("BSgenome.Athaliana.TAIR.TAIR9", quietly = TRUE)) {
+               stop("The package 'BSgenome.Athaliana.TAIR.TAIR9' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Athaliana.TAIR.TAIR9')")
+             }
+             organism <- BSgenome.Athaliana.TAIR.TAIR9::BSgenome.Athaliana.TAIR.TAIR9
+
              ##Selects hg19 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/TAIR9"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/TAIR9"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -585,7 +608,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               }  
+               }
                setwd(wd)
                bamfl <- Rsamtools::BamFile(i)
                chromosomes <- GenomeInfoDb::seqlevels(bamfl)
@@ -593,13 +616,13 @@ callindels <- function(bam,
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                for (x in chromosomes) {
-                 print(paste0("Creating ", 
+                 print(paste0("Creating ",
                               basename(tools::file_path_sans_ext(i)), "_", x, ".bam ",
                               "in temp folder."))
-                 system(paste0("samtools view -b ", 
+                 system(paste0("samtools view -b ",
                                i,
                                " ", x, " > ",
-                               tempfolder, "/", 
+                               tempfolder, "/",
                                basename(tools::file_path_sans_ext(i)), "_", x, ".bam"))
                  setwd(tempfolder)
                  Rsamtools::sortBam(paste0(basename(tools::file_path_sans_ext(i)), "_", x, ".bam"),
@@ -609,8 +632,8 @@ callindels <- function(bam,
                }
                chrbam <- tools::list_files_with_exts(tempfolder, "bam")
                chrbam <- sort(chrbam)
-               
-               
+
+
                for (bam in chrbam) {
                  print(paste0("Identifying variants in ", basename(bam)))
                  bamfl <- Rsamtools::BamFile(bam)
@@ -647,16 +670,16 @@ callindels <- function(bam,
                    setwd(tempfolder)
                    print(getwd())
                    print(paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"))
-                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"), 
+                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"),
                                  index = FALSE)
                    gc()
                  } else {
                    print(paste0("No variants found in ", (basename(bam))))
                  }
-                 
+
                  setwd(wd)
-               } 
-               
+               }
+
                print("Merging VCF files...")
                vcflist <- tools::list_files_with_exts(tempfolder, "vcf")
                vcfpath <- normalizePath(vcflist)
@@ -671,32 +694,36 @@ callindels <- function(bam,
                rownames(match) <- gsub("chr?(.*)", ".", rsIDs)
                VariantAnnotation::writeVcf(match, paste0(outputdir, "/",
                                       basename(tools::file_path_sans_ext(i)),
-                                      "_INDEL", ".vcf"), 
+                                      "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
              file.remove(normalizePath(tempfolder))
            },
            "5"={
-             library(BSgenome.Dmelanogaster.UCSC.dm6)
+             #library(BSgenome.Dmelanogaster.UCSC.dm6)
              ##Drosophilia melanogaster dm6
-             organism <- BSgenome.Dmelanogaster.UCSC.dm6
-             
+             if (!requireNamespace("BSgenome.Dmelanogaster.UCSC.dm6", quietly = TRUE)) {
+               stop("The package 'BSgenome.Dmelanogaster.UCSC.dm6' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Dmelanogaster.UCSC.dm6')")
+             }
+             organism <- BSgenome.Dmelanogaster.UCSC.dm6::BSgenome.Dmelanogaster.UCSC.dm6
+
              ##Selects dm6 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/dm6"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/dm6"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -707,7 +734,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               }  
+               }
                setwd(wd)
                bamfl <- Rsamtools::BamFile(i)
                chromosomes <- GenomeInfoDb::seqlevels(bamfl)
@@ -715,13 +742,13 @@ callindels <- function(bam,
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                for (x in chromosomes) {
-                 print(paste0("Creating ", 
+                 print(paste0("Creating ",
                               basename(tools::file_path_sans_ext(i)), "_", x, ".bam ",
                               "in temp folder."))
-                 system(paste0("samtools view -b ", 
+                 system(paste0("samtools view -b ",
                                i,
                                " ", x, " > ",
-                               tempfolder, "/", 
+                               tempfolder, "/",
                                basename(tools::file_path_sans_ext(i)), "_", x, ".bam"))
                  setwd(tempfolder)
                  Rsamtools::sortBam(paste0(basename(tools::file_path_sans_ext(i)), "_", x, ".bam"),
@@ -731,8 +758,8 @@ callindels <- function(bam,
                }
                chrbam <- tools::list_files_with_exts(tempfolder, "bam")
                chrbam <- sort(chrbam)
-               
-               
+
+
                for (bam in chrbam) {
                  print(paste0("Identifying variants in ", basename(bam)))
                  bamfl <- Rsamtools::BamFile(bam)
@@ -769,16 +796,16 @@ callindels <- function(bam,
                    setwd(tempfolder)
                    print(getwd())
                    print(paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"))
-                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"), 
+                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"),
                                  index = FALSE)
                    gc()
                  } else {
                    print(paste0("No variants found in ", (basename(bam))))
                  }
-                 
+
                  setwd(wd)
-               } 
-               
+               }
+
                print("Merging VCF files...")
                vcflist <- tools::list_files_with_exts(tempfolder, "vcf")
                vcfpath <- normalizePath(vcflist)
@@ -793,32 +820,36 @@ callindels <- function(bam,
                rownames(match) <- gsub("chr?(.*)", ".", rsIDs)
                VariantAnnotation::writeVcf(match, paste0(outputdir, "/",
                                       basename(tools::file_path_sans_ext(i)),
-                                      "_INDEL", ".vcf"), 
+                                      "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
              file.remove(normalizePath(tempfolder))
            },
            "6"={
-             library(BSgenome.Drerio.UCSC.danRer11)
+             #library(BSgenome.Drerio.UCSC.danRer11)
              ##Danio rerio danRer11
-             organism <- BSgenome.Drerio.UCSC.danRer11
-             
+             if (!requireNamespace("BSgenome.Drerio.UCSC.danRer11", quietly = TRUE)) {
+               stop("The package 'BSgenome.Drerio.UCSC.danRer11' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Drerio.UCSC.danRer11')")
+             }
+             organism <- BSgenome.Drerio.UCSC.danRer11::BSgenome.Drerio.UCSC.danRer11
+
              ##Selects danRer11 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/danRer11"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/danRer11"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -829,7 +860,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               }  
+               }
                setwd(wd)
                bamfl <- Rsamtools::BamFile(i)
                chromosomes <- GenomeInfoDb::seqlevels(bamfl)
@@ -837,13 +868,13 @@ callindels <- function(bam,
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                for (x in chromosomes) {
-                 print(paste0("Creating ", 
+                 print(paste0("Creating ",
                               basename(tools::file_path_sans_ext(i)), "_", x, ".bam ",
                               "in temp folder."))
-                 system(paste0("samtools view -b ", 
+                 system(paste0("samtools view -b ",
                                i,
                                " ", x, " > ",
-                               tempfolder, "/", 
+                               tempfolder, "/",
                                basename(tools::file_path_sans_ext(i)), "_", x, ".bam"))
                  setwd(tempfolder)
                  Rsamtools::sortBam(paste0(basename(tools::file_path_sans_ext(i)), "_", x, ".bam"),
@@ -853,8 +884,8 @@ callindels <- function(bam,
                }
                chrbam <- tools::list_files_with_exts(tempfolder, "bam")
                chrbam <- sort(chrbam)
-               
-               
+
+
                for (bam in chrbam) {
                  print(paste0("Identifying variants in ", basename(bam)))
                  bamfl <- Rsamtools::BamFile(bam)
@@ -891,16 +922,16 @@ callindels <- function(bam,
                    setwd(tempfolder)
                    print(getwd())
                    print(paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"))
-                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"), 
+                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"),
                                  index = FALSE)
                    gc()
                  } else {
                    print(paste0("No variants found in ", (basename(bam))))
                  }
-                 
+
                  setwd(wd)
-               } 
-               
+               }
+
                print("Merging VCF files...")
                vcflist <- tools::list_files_with_exts(tempfolder, "vcf")
                vcfpath <- normalizePath(vcflist)
@@ -915,32 +946,36 @@ callindels <- function(bam,
                rownames(match) <- gsub("chr?(.*)", ".", rsIDs)
                VariantAnnotation::writeVcf(match, paste0(outputdir, "/",
                                       basename(tools::file_path_sans_ext(i)),
-                                      "_INDEL", ".vcf"), 
+                                      "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
              file.remove(normalizePath(tempfolder))
            },
            "7"={
-             library(BSgenome.Rnorvegicus.UCSC.rn5)
+             #library(BSgenome.Rnorvegicus.UCSC.rn5)
              ##Rattus norvegicus rn5
-             organism <- BSgenome.Rnorvegicus.UCSC.rn5
-             
+             if (!requireNamespace("BSgenome.Rnorvegicus.UCSC.rn5", quietly = TRUE)) {
+               stop("The package 'BSgenome.Rnorvegicus.UCSC.rn5' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Rnorvegicus.UCSC.rn5')")
+             }
+             organism <- BSgenome.Rnorvegicus.UCSC.rn5::BSgenome.Rnorvegicus.UCSC.rn5
+
              ##Selects danRer11 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/rn5"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/rn5"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -951,7 +986,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               }  
+               }
                setwd(wd)
                bamfl <- Rsamtools::BamFile(i)
                chromosomes <- GenomeInfoDb::seqlevels(bamfl)
@@ -959,13 +994,13 @@ callindels <- function(bam,
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                for (x in chromosomes) {
-                 print(paste0("Creating ", 
+                 print(paste0("Creating ",
                               basename(tools::file_path_sans_ext(i)), "_", x, ".bam ",
                               "in temp folder."))
-                 system(paste0("samtools view -b ", 
+                 system(paste0("samtools view -b ",
                                i,
                                " ", x, " > ",
-                               tempfolder, "/", 
+                               tempfolder, "/",
                                basename(tools::file_path_sans_ext(i)), "_", x, ".bam"))
                  setwd(tempfolder)
                  Rsamtools::sortBam(paste0(basename(tools::file_path_sans_ext(i)), "_", x, ".bam"),
@@ -975,8 +1010,8 @@ callindels <- function(bam,
                }
                chrbam <- tools::list_files_with_exts(tempfolder, "bam")
                chrbam <- sort(chrbam)
-               
-               
+
+
                for (bam in chrbam) {
                  print(paste0("Identifying variants in ", basename(bam)))
                  bamfl <- Rsamtools::BamFile(bam)
@@ -1013,16 +1048,16 @@ callindels <- function(bam,
                    setwd(tempfolder)
                    print(getwd())
                    print(paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"))
-                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"), 
+                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"),
                                  index = FALSE)
                    gc()
                  } else {
                    print(paste0("No variants found in ", (basename(bam))))
                  }
-                 
+
                  setwd(wd)
-               } 
-               
+               }
+
                print("Merging VCF files...")
                vcflist <- tools::list_files_with_exts(tempfolder, "vcf")
                vcfpath <- normalizePath(vcflist)
@@ -1037,32 +1072,36 @@ callindels <- function(bam,
                rownames(match) <- gsub("chr?(.*)", ".", rsIDs)
                VariantAnnotation::writeVcf(match, paste0(outputdir, "/",
                                       basename(tools::file_path_sans_ext(i)),
-                                      "_INDEL", ".vcf"), 
+                                      "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
              file.remove(normalizePath(tempfolder))
            },
            "8"={
-             library(BSgenome.Scerevisiae.UCSC.sacCer3)
+             #library(BSgenome.Scerevisiae.UCSC.sacCer3)
              ##Saccharomyces cerevisiae sacCer3
-             organism <- BSgenome.Scerevisiae.UCSC.sacCer3
-             
+             if (!requireNamespace("BSgenome.Scerevisiae.UCSC.sacCer3", quietly = TRUE)) {
+               stop("The package 'BSgenome.Scerevisiae.UCSC.sacCer3' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Scerevisiae.UCSC.sacCer3')")
+             }
+             organism <- BSgenome.Scerevisiae.UCSC.sacCer3::BSgenome.Scerevisiae.UCSC.sacCer3
+
              ##Selects sacCer3 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/sacCer3"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/sacCer3"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -1073,7 +1112,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               }  
+               }
                setwd(wd)
                bamfl <- Rsamtools::BamFile(i)
                chromosomes <- GenomeInfoDb::seqlevels(bamfl)
@@ -1081,13 +1120,13 @@ callindels <- function(bam,
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                for (x in chromosomes) {
-                 print(paste0("Creating ", 
+                 print(paste0("Creating ",
                               basename(tools::file_path_sans_ext(i)), "_", x, ".bam ",
                               "in temp folder."))
-                 system(paste0("samtools view -b ", 
+                 system(paste0("samtools view -b ",
                                i,
                                " ", x, " > ",
-                               tempfolder, "/", 
+                               tempfolder, "/",
                                basename(tools::file_path_sans_ext(i)), "_", x, ".bam"))
                  setwd(tempfolder)
                  Rsamtools::sortBam(paste0(basename(tools::file_path_sans_ext(i)), "_", x, ".bam"),
@@ -1097,8 +1136,8 @@ callindels <- function(bam,
                }
                chrbam <- tools::list_files_with_exts(tempfolder, "bam")
                chrbam <- sort(chrbam)
-               
-               
+
+
                for (bam in chrbam) {
                  print(paste0("Identifying variants in ", basename(bam)))
                  bamfl <- Rsamtools::BamFile(bam)
@@ -1135,16 +1174,16 @@ callindels <- function(bam,
                    setwd(tempfolder)
                    print(getwd())
                    print(paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"))
-                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"), 
+                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"),
                                  index = FALSE)
                    gc()
                  } else {
                    print(paste0("No variants found in ", (basename(bam))))
                  }
-                 
+
                  setwd(wd)
-               } 
-               
+               }
+
                print("Merging VCF files...")
                vcflist <- tools::list_files_with_exts(tempfolder, "vcf")
                vcfpath <- normalizePath(vcflist)
@@ -1159,13 +1198,13 @@ callindels <- function(bam,
                rownames(match) <- gsub("chr?(.*)", ".", rsIDs)
                VariantAnnotation::writeVcf(match, paste0(outputdir, "/",
                                       basename(tools::file_path_sans_ext(i)),
-                                      "_INDEL", ".vcf"), 
+                                      "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
@@ -1174,17 +1213,21 @@ callindels <- function(bam,
            "9"={
              library(BSgenome.Celegans.UCSC.ce11)
              ##Caenorhabditis elagans
-             organism <- BSgenome.Celegans.UCSC.ce11
-             
+             if (!requireNamespace("BSgenome.Celegans.UCSC.ce11", quietly = TRUE)) {
+               stop("The package 'BSgenome.Celegans.UCSC.ce11' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Celegans.UCSC.ce11')")
+             }
+             organism <- BSgenome.Celegans.UCSC.ce11::BSgenome.Celegans.UCSC.ce11
+
              ##Selects ce11 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/ce11"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/ce11"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -1195,7 +1238,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               }  
+               }
                setwd(wd)
                bamfl <- Rsamtools::BamFile(i)
                chromosomes <- GenomeInfoDb::seqlevels(bamfl)
@@ -1203,13 +1246,13 @@ callindels <- function(bam,
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                for (x in chromosomes) {
-                 print(paste0("Creating ", 
+                 print(paste0("Creating ",
                               basename(tools::file_path_sans_ext(i)), "_", x, ".bam ",
                               "in temp folder."))
-                 system(paste0("samtools view -b ", 
+                 system(paste0("samtools view -b ",
                                i,
                                " ", x, " > ",
-                               tempfolder, "/", 
+                               tempfolder, "/",
                                basename(tools::file_path_sans_ext(i)), "_", x, ".bam"))
                  setwd(tempfolder)
                  Rsamtools::sortBam(paste0(basename(tools::file_path_sans_ext(i)), "_", x, ".bam"),
@@ -1219,8 +1262,8 @@ callindels <- function(bam,
                }
                chrbam <- tools::list_files_with_exts(tempfolder, "bam")
                chrbam <- sort(chrbam)
-               
-               
+
+
                for (bam in chrbam) {
                  print(paste0("Identifying variants in ", basename(bam)))
                  bamfl <- Rsamtools::BamFile(bam)
@@ -1257,16 +1300,16 @@ callindels <- function(bam,
                    setwd(tempfolder)
                    print(getwd())
                    print(paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"))
-                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"), 
+                   a <- VariantAnnotation::writeVcf(vcf, paste0(tools::file_path_sans_ext(basename(bam)), ".vcf"),
                                  index = FALSE)
                    gc()
                  } else {
                    print(paste0("No variants found in ", (basename(bam))))
                  }
-                 
+
                  setwd(wd)
-               } 
-               
+               }
+
                print("Merging VCF files...")
                vcflist <- tools::list_files_with_exts(tempfolder, "vcf")
                vcfpath <- normalizePath(vcflist)
@@ -1281,40 +1324,48 @@ callindels <- function(bam,
                rownames(match) <- gsub("chr?(.*)", ".", rsIDs)
                VariantAnnotation::writeVcf(match, paste0(outputdir, "/",
                                       basename(tools::file_path_sans_ext(i)),
-                                      "_INDEL", ".vcf"), 
+                                      "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
              file.remove(normalizePath(tempfolder))
            }
-    ) 
+    )
   } else if(mode == "n") {
     ##Sets the reference genome that corresponds to the species chosen by the user
     switch(species,
            "1"={
              ##Homo sapiens hg19
-             library(BSgenome.Hsapiens.UCSC.hg19)
-             library(SNPlocs.Hsapiens.dbSNP144.GRCh37)
-             organism <- BSgenome.Hsapiens.UCSC.hg19
-             
+             #library(BSgenome.Hsapiens.UCSC.hg19)
+             #library(SNPlocs.Hsapiens.dbSNP144.GRCh37) # typo?
+             if (!requireNamespace("BSgenome.Hsapiens.UCSC.hg19", quietly = TRUE)) {
+               stop("The package 'BSgenome.Hsapiens.UCSC.hg19' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Hsapiens.UCSC.hg19')")
+             }
+             if (!requireNamespace("XtraSNPlocs.Hsapiens.dbSNP144.GRCh37", quietly = TRUE)) {
+               stop("The package 'XtraSNPlocs.Hsapiens.dbSNP144.GRCh37' is required but not installed.
+       Install it with: BiocManager::install('XtraSNPlocs.Hsapiens.dbSNP144.GRCh37')")
+             }
+             organism <- BSgenome.Hsapiens.UCSC.hg19::BSgenome.Hsapiens.UCSC.hg19
+
              ##Selects hg19 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/hg19"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/hg19"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
-             
+
              output <- c()
              for(i in bam) {
                print(paste0("Analysing ", basename(i)))
@@ -1323,7 +1374,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               } 
+               }
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                vcflist <- c()
@@ -1345,13 +1396,13 @@ callindels <- function(bam,
                VariantAnnotation::writeVcf(vcf, paste0(tempfolder, "/",
                                     basename(tools::file_path_sans_ext(i)),
                                     "_INDEL", ".vcf"))
-               
-               
+
+
                vcflist <- c()
                vcf <- VariantAnnotation::readVcf(paste0(tempfolder, "/",
                                      basename(tools::file_path_sans_ext(i)),
                                      "_INDEL", ".vcf"))
-               
+
                ##Due to constraints in memory, rsIDs are obtained on a chromosome by chromosome
                ##basis
                ##The resulting data frame is sorted as per the vcf and the rsIDs are injected
@@ -1360,7 +1411,7 @@ callindels <- function(bam,
                all_snps <- XtraSNPlocs.Hsapiens.dbSNP144.GRCh37
                vcfID <- data.frame()
                mainChromosomes <- paste0("chr", GenomeInfoDb::seqlevels(all_snps))
-               
+
                print("Finding rsIDs...")
                for (x in mainChromosomes) {
                  vcf_chrom <- vcf[grepl(names(vcf),
@@ -1371,10 +1422,10 @@ callindels <- function(bam,
                    tar_chr <- gsub("chr", "", tar_chr)
                    my_snps <- snpsBySeqname(all_snps, c(tar_chr))
                    snp_ID <- data.frame(posIDX = paste0("chr",
-                                                        GenomicRanges::seqnames(my_snps), 
-                                                        ":", 
-                                                        pos(my_snps)), 
-                                        rsID = my_snps$RefSNP_id, 
+                                                        GenomicRanges::seqnames(my_snps),
+                                                        ":",
+                                                        pos(my_snps)),
+                                        rsID = my_snps$RefSNP_id,
                                         stringsAsFactors = FALSE)
                    matV1 <- data.frame(Variant = names(rd_chr), stringsAsFactors = FALSE)
                    matV1$chromosome <- gsub("(.*):(.*)_(.*)/(.*)", "\\1", matV1$Variant)
@@ -1386,12 +1437,12 @@ callindels <- function(bam,
                    matV1$start <- as.integer(matV1$start)
                    length <- 1:length(matV1$start)
                    for (i in length) {
-                     matV1$end[i] <- 
+                     matV1$end[i] <-
                        matV1$start[i] + (nchar(matV1$ref_allele[i]) - nchar(matV1$alt_allele[i]))
                    }
                    matV1$end[matV1$end < matV1$start] <- matV1$start[matV1$end < matV1$start] - 1
-                   matV1$posIDX <- gsub("(.*)_(.*)", "\\1", paste0(matV1$chromosome, 
-                                                                   ":", 
+                   matV1$posIDX <- gsub("(.*)_(.*)", "\\1", paste0(matV1$chromosome,
+                                                                   ":",
                                                                    matV1$start,
                                                                    "-",
                                                                    matV1$end))
@@ -1402,7 +1453,7 @@ callindels <- function(bam,
                    matS <- dplyr::select(matS,-posIDX)
                    vcfID <- merge(vcfID, matS, all.x = TRUE, all.y = TRUE)
                    vcfID <- merge(vcfID, matS, all.x = TRUE, all.y = TRUE)
-                 }  
+                 }
                }
                print("Injecting rsIDs into VCF...")
                vcfID$chr <-  as.integer(gsub("chr", "", vcfID$chromosome))
@@ -1422,40 +1473,48 @@ callindels <- function(bam,
                fill <- rep(".", length(names(vcf)) - length(rsID))
                rsID <- append(rsID, fill)
                names(vcf) <- rsID
-               
+
                print("Writing to VCF file...")
                setwd(outputdir)
                VariantAnnotation::writeVcf(vcf, paste0(outputdir, "/",
                                     basename(tools::file_path_sans_ext(i)),
-                                    "_INDEL", ".vcf"), 
+                                    "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                file.remove(normalizePath(tempfolder))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
-               
+
              }
-             
+
            },
            "2"={
              ##Homo sapiens hg38
-             library(BSgenome.Hsapiens.UCSC.hg38)
-             library(SNPlocs.Hsapiens.dbSNP151.GRCh38)
-             organism <- BSgenome.Hsapiens.UCSC.hg38
-             
+             #library(BSgenome.Hsapiens.UCSC.hg38)
+             #library(SNPlocs.Hsapiens.dbSNP151.GRCh38)
+             if (!requireNamespace("BSgenome.Hsapiens.UCSC.hg38", quietly = TRUE)) {
+               stop("The package 'BSgenome.Hsapiens.UCSC.hg38' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Hsapiens.UCSC.hg38')")
+             }
+             if (!requireNamespace("XtraSNPlocs.Hsapiens.dbSNP144.GRCh38", quietly = TRUE)) {
+               stop("The package 'XtraSNPlocs.Hsapiens.dbSNP144.GRCh38' is required but not installed.
+       Install it with: BiocManager::install('XtraSNPlocs.Hsapiens.dbSNP144.GRCh38')")
+             }
+             organism <- BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38
+
              ##Selects hg38 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/hg38"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/hg38"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -1466,7 +1525,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               } 
+               }
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                vcflist <- c()
@@ -1488,13 +1547,13 @@ callindels <- function(bam,
                VariantAnnotation::writeVcf(vcf, paste0(tempfolder, "/",
                                     basename(tools::file_path_sans_ext(i)),
                                     "_INDEL", ".vcf"))
-               
-               
+
+
                vcflist <- c()
                vcf <- VariantAnnotation::readVcf(paste0(tempfolder, "/",
                                      basename(tools::file_path_sans_ext(i)),
                                      "_INDEL", ".vcf"))
-               
+
                ##Due to constraints in memory, rsIDs are obtained on a chromosome by chromosome
                ##basis
                ##The resulting data frame is sorted as per the vcf and the rsIDs are injected
@@ -1503,7 +1562,7 @@ callindels <- function(bam,
                all_snps <- XtraSNPlocs.Hsapiens.dbSNP144.GRCh38
                vcfID <- data.frame()
                mainChromosomes <- paste0("chr", GenomeInfoDb::seqlevels(all_snps))
-               
+
                print("Finding rsIDs...")
                for (x in mainChromosomes) {
                  vcf_chrom <- vcf[grepl(names(vcf),
@@ -1514,10 +1573,10 @@ callindels <- function(bam,
                    tar_chr <- gsub("chr", "", tar_chr)
                    my_snps <- snpsBySeqname(all_snps, c(tar_chr))
                    snp_ID <- data.frame(posIDX = paste0("chr",
-                                                        GenomicRanges::seqnames(my_snps), 
-                                                        ":", 
-                                                        pos(my_snps)), 
-                                        rsID = my_snps$RefSNP_id, 
+                                                        GenomicRanges::seqnames(my_snps),
+                                                        ":",
+                                                        pos(my_snps)),
+                                        rsID = my_snps$RefSNP_id,
                                         stringsAsFactors = FALSE)
                    matV1 <- data.frame(Variant = names(rd_chr), stringsAsFactors = FALSE)
                    matV1$chromosome <- gsub("(.*):(.*)_(.*)/(.*)", "\\1", matV1$Variant)
@@ -1529,12 +1588,12 @@ callindels <- function(bam,
                    matV1$start <- as.integer(matV1$start)
                    length <- 1:length(matV1$start)
                    for (i in length) {
-                     matV1$end[i] <- 
+                     matV1$end[i] <-
                        matV1$start[i] + (nchar(matV1$ref_allele[i]) - nchar(matV1$alt_allele[i]))
                    }
                    matV1$end[matV1$end < matV1$start] <- matV1$start[matV1$end < matV1$start] - 1
-                   matV1$posIDX <- gsub("(.*)_(.*)", "\\1", paste0(matV1$chromosome, 
-                                                                   ":", 
+                   matV1$posIDX <- gsub("(.*)_(.*)", "\\1", paste0(matV1$chromosome,
+                                                                   ":",
                                                                    matV1$start,
                                                                    "-",
                                                                    matV1$end))
@@ -1545,7 +1604,7 @@ callindels <- function(bam,
                    matS <- dplyr::select(matS,-posIDX)
                    vcfID <- merge(vcfID, matS, all.x = TRUE, all.y = TRUE)
                    vcfID <- merge(vcfID, matS, all.x = TRUE, all.y = TRUE)
-                 }  
+                 }
                }
                print("Injecting rsIDs into VCF...")
                vcfID$chr <-  as.integer(gsub("chr", "", vcfID$chromosome))
@@ -1565,38 +1624,43 @@ callindels <- function(bam,
                fill <- rep(".", length(names(vcf)) - length(rsID))
                rsID <- append(rsID, fill)
                names(vcf) <- rsID
-               
+
                print("Writing to VCF file...")
                setwd(outputdir)
                VariantAnnotation::writeVcf(vcf, paste0(outputdir, "/",
                                     basename(tools::file_path_sans_ext(i)),
-                                    "_INDEL", ".vcf"), 
+                                    "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                file.remove(normalizePath(tempfolder))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
-               
+
              }
            },
            "3"={
              ##Mus musculus mm10
-             library(BSgenome.Mmusculus.UCSC.mm10)
-             organism <- BSgenome.Mmusculus.UCSC.mm10
-             
+             #library(BSgenome.Mmusculus.UCSC.mm10)
+             if (!requireNamespace("BSgenome.Mmusculus.UCSC.mm10", quietly = TRUE)) {
+               stop("The package 'BSgenome.Mmusculus.UCSC.mm10' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Mmusculus.UCSC.mm10')")
+             }
+
+             organism <- BSgenome.Mmusculus.UCSC.mm10::BSgenome.Mmusculus.UCSC.mm10
+
              ##Selects mm10 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/mm10"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/mm10"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -1608,7 +1672,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               } 
+               }
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                vcflist <- c()
@@ -1631,32 +1695,37 @@ callindels <- function(bam,
                setwd(outputdir)
                VariantAnnotation::writeVcf(vcf, paste0(outputdir, "/",
                                     basename(tools::file_path_sans_ext(i)),
-                                    "_INDEL", ".vcf"), 
+                                    "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                file.remove(normalizePath(tempfolder))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
            },
            "4"={
              ##Arabidopsis thaliana TAIR9
-             library(BSgenome.Athaliana.TAIR.TAIR9)
-             organism <- BSgenome.Athaliana.TAIR.TAIR9
-             
+            # library(BSgenome.Athaliana.TAIR.TAIR9)
+             if (!requireNamespace("BSgenome.Athaliana.TAIR.TAIR9", quietly = TRUE)) {
+               stop("The package 'BSgenome.Athaliana.TAIR.TAIR9' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Athaliana.TAIR.TAIR9')")
+             }
+
+             organism <- BSgenome.Athaliana.TAIR.TAIR9::BSgenome.Athaliana.TAIR.TAIR9
+
              ##Selects hg19 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/TAIR9"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/TAIR9"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -1668,7 +1737,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               } 
+               }
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                vcflist <- c()
@@ -1691,32 +1760,37 @@ callindels <- function(bam,
                setwd(outputdir)
                VariantAnnotation::writeVcf(vcf, paste0(outputdir, "/",
                                     basename(tools::file_path_sans_ext(i)),
-                                    "_INDEL", ".vcf"), 
+                                    "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                file.remove(normalizePath(tempfolder))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
            },
            "5"={
              ##Drosophilia melanogaster dm6
-             library(BSgenome.Dmelanogaster.UCSC.dm6)
-             organism <- BSgenome.Dmelanogaster.UCSC.dm6
-             
+             #library(BSgenome.Dmelanogaster.UCSC.dm6)
+             if (!requireNamespace("BSgenome.Dmelanogaster.UCSC.dm6", quietly = TRUE)) {
+               stop("The package 'BSgenome.Dmelanogaster.UCSC.dm6' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Dmelanogaster.UCSC.dm6')")
+             }
+
+             organism <- BSgenome.Dmelanogaster.UCSC.dm6::BSgenome.Dmelanogaster.UCSC.dm6
+
              ##Selects dm6 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/dm6"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/dm6"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -1728,7 +1802,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               } 
+               }
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                vcflist <- c()
@@ -1751,32 +1825,37 @@ callindels <- function(bam,
                setwd(outputdir)
                VariantAnnotation::writeVcf(vcf, paste0(outputdir, "/",
                                     basename(tools::file_path_sans_ext(i)),
-                                    "_INDEL", ".vcf"), 
+                                    "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                file.remove(normalizePath(tempfolder))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
            },
            "6"={
              ##Danio rerio danRer11
-             library(BSgenome.Drerio.UCSC.danRer11)
-             organism <- BSgenome.Drerio.UCSC.danRer11
-             
+            # library(BSgenome.Drerio.UCSC.danRer11)
+             if (!requireNamespace("BSgenome.Drerio.UCSC.danRer11", quietly = TRUE)) {
+               stop("The package 'BSgenome.Drerio.UCSC.danRer11' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Drerio.UCSC.danRer11')")
+             }
+
+             organism <- BSgenome.Drerio.UCSC.danRer11::BSgenome.Drerio.UCSC.danRer11
+
              ##Selects danRer11 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/danRer11"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/danRer11"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -1787,7 +1866,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               } 
+               }
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                vcflist <- c()
@@ -1810,32 +1889,37 @@ callindels <- function(bam,
                setwd(outputdir)
                VariantAnnotation::writeVcf(vcf, paste0(outputdir, "/",
                                     basename(tools::file_path_sans_ext(i)),
-                                    "_INDEL", ".vcf"), 
+                                    "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                file.remove(normalizePath(tempfolder))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
            },
            "7"={
              ##Rattus norvegicus rn5
-             library(BSgenome.Rnorvegicus.UCSC.rn5)
-             organism <- BSgenome.Rnorvegicus.UCSC.rn5
-             
+             #library(BSgenome.Rnorvegicus.UCSC.rn5)
+             if (!requireNamespace("BSgenome.Rnorvegicus.UCSC.rn5", quietly = TRUE)) {
+               stop("The package 'BSgenome.Rnorvegicus.UCSC.rn5' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Rnorvegicus.UCSC.rn5')")
+             }
+
+             organism <- BSgenome.Rnorvegicus.UCSC.rn5::BSgenome.Rnorvegicus.UCSC.rn5
+
              ##Selects danRer11 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/rn5"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/rn5"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -1846,7 +1930,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               } 
+               }
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                vcflist <- c()
@@ -1869,32 +1953,37 @@ callindels <- function(bam,
                setwd(outputdir)
                VariantAnnotation::writeVcf(vcf, paste0(outputdir, "/",
                                     basename(tools::file_path_sans_ext(i)),
-                                    "_INDEL", ".vcf"), 
+                                    "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                file.remove(normalizePath(tempfolder))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
            },
            "8"={
              ##Saccharomyces cerevisiae sacCer3
-             library(BSgenome.Scerevisiae.UCSC.sacCer3)
-             organism <- BSgenome.Scerevisiae.UCSC.sacCer3
-             
+             #library(BSgenome.Scerevisiae.UCSC.sacCer3)
+             if (!requireNamespace("BSgenome.Scerevisiae.UCSC.sacCer3", quietly = TRUE)) {
+               stop("The package 'BSgenome.Scerevisiae.UCSC.sacCer3' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Scerevisiae.UCSC.sacCer3')")
+             }
+
+             organism <- BSgenome.Scerevisiae.UCSC.sacCer3::BSgenome.Scerevisiae.UCSC.sacCer3
+
              ##Selects sacCer3 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/sacCer3"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/sacCer3"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              ouput <- c()
@@ -1906,7 +1995,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               } 
+               }
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                vcflist <- c()
@@ -1929,32 +2018,37 @@ callindels <- function(bam,
                setwd(outputdir)
                VariantAnnotation::writeVcf(vcf, paste0(outputdir, "/",
                                     basename(tools::file_path_sans_ext(i)),
-                                    "_INDEL", ".vcf"), 
+                                    "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                file.remove(normalizePath(tempfolder))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
            },
            "9"={
              ##Caenorhabditis elagans
-             library(BSgenome.Celegans.UCSC.ce11)
-             organism <- BSgenome.Celegans.UCSC.ce11
-             
+            # library(BSgenome.Celegans.UCSC.ce11)
+             if (!requireNamespace("BSgenome.Celegans.UCSC.ce11", quietly = TRUE)) {
+               stop("The package 'BSgenome.Celegans.UCSC.ce11' is required but not installed.
+       Install it with: BiocManager::install('BSgenome.Celegans.UCSC.ce11')")
+             }
+
+             organism <- BSgenome.Celegans.UCSC.ce11::BSgenome.Celegans.UCSC.ce11
+
              ##Selects ce11 as the reference genome
              ##If reference doesn't exist within package directory, create one
-             if (dir.exists(paste0(find.package("Exvar"), "/ce11"))) {
+             if (dir.exists(paste0(find.package("exvar"), "/ce11"))) {
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"))
+                                    directory = find.package("exvar"))
              } else {
                print("Reference genome not found. Creating reference. This might take a while...")
                refgen <- gmapR::GmapGenome(organism,
-                                    directory = find.package("Exvar"),
+                                    directory = find.package("exvar"),
                                     create = TRUE)
              }
              output <- c()
@@ -1965,7 +2059,7 @@ callindels <- function(bam,
                  setwd(dirname(i))
                  Rsamtools::sortBam(i, tools::file_path_sans_ext(i))
                  Rsamtools::indexBam(i)
-               } 
+               }
                tempfolder <- paste0(dirname(i), "/temp")
                dir.create(tempfolder)
                vcflist <- c()
@@ -1988,14 +2082,14 @@ callindels <- function(bam,
                setwd(outputdir)
                VariantAnnotation::writeVcf(vcf, paste0(outputdir, "/",
                                     basename(tools::file_path_sans_ext(i)),
-                                    "_INDEL", ".vcf"), 
+                                    "_INDEL", ".vcf"),
                         index = TRUE)
                file.remove(list.files(normalizePath(tempfolder), full.names = TRUE))
                print(paste0("Created ", tools::file_path_sans_ext(basename(i)), "_INDEL", ".vcf.bgz"))
                file.remove(normalizePath(tempfolder))
                gc()
                setwd(wd)
-               append(output, paste0(outputdir, "/", 
+               append(output, paste0(outputdir, "/",
                                      tools::file_path_sans_ext(basename(i)),
                                      "_INDEL", ".vcf.bgz"))
              }
