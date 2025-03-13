@@ -36,7 +36,7 @@ It is developed to facilitate and minimize the skills required for the genetic e
 
 It could be used to analyze data from eight species including:
 
-    * Homo Sapiens (hg19, 37, and 38)
+    * Homo Sapiens (hg19/GRCh37, and GRCh38)
 
     * Mus Musculus
 
